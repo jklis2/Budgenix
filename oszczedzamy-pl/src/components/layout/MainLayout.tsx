@@ -10,9 +10,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen flex flex-col">
       <MainNavbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      <div className="flex flex-grow">
-        {isSidebarOpen && <MainSidebar />}
-        <main className={`flex-grow p-6 transition-all ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
+      <div className={`flex-grow transition-all ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
+        <MainSidebar isOpen={isSidebarOpen} />
+        <main className="p-6">
           {children}
         </main>
       </div>
