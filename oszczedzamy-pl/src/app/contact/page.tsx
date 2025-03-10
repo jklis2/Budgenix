@@ -1,11 +1,9 @@
 import HomeLayout from "@/components/layout/HomeLayout";
 
-export default function Home() {
+export default function Contact() {
   return (
     <HomeLayout>
-      <div>
-        <h1>Strona główna</h1>  
-      </div>
+      <div>Kontakt</div>
     </HomeLayout>
   );
 }
