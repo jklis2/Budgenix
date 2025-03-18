@@ -4,7 +4,7 @@ export default function HomeFooter() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-center">
           <p className="text-gray-500 text-sm">
-            2025 OszczędzaMy. Wszelkie prawa zastrzeżone.
+            2025 Budgenix. Wszelkie prawa zastrzeżone.
           </p>
         </div>
       </div>

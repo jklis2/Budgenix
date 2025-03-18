@@ -1,2 +1,2 @@
-# OszczedzaMy_PL
-OszczędzaMy.pl
+# Budgenix
+Budgenix
