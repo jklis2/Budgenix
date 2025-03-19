@@ -8,10 +8,54 @@ export async function POST(req: Request) {
   const { email, password, rememberMe } = await req.json();
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.isActive) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  
+  // Check if account is locked due to too many failed attempts
+  if (user.failedAttempts >= 5 && user.lastFailedAttempt) {
+    const lockTime = 15 * 60 * 1000; // 15 minutes in milliseconds
+    const lockExpiry = new Date(user.lastFailedAttempt.getTime() + lockTime);
+    const now = new Date();
+    
+    if (now < lockExpiry) {
+      const remainingMinutes = Math.ceil((lockExpiry.getTime() - now.getTime()) / 60000);
+      return NextResponse.json({ 
+        error: `Account temporarily locked. Try again in ${remainingMinutes} minutes.` 
+      }, { status: 429 });
+    } else {
+      // Reset failed attempts if lock period has expired
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedAttempts: 0, lastFailedAttempt: null }
+      });
+    }
+  }
+
+  // Check if account is active
+  if (!user.isActive) return NextResponse.json({ error: "Account not activated" }, { status: 401 });
 
   const validPassword = await compare(password, user.password);
-  if (!validPassword) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  if (!validPassword) {
+    // Increment failed attempts counter
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { 
+        failedAttempts: user.failedAttempts + 1,
+        lastFailedAttempt: new Date()
+      }
+    });
+    
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  }
+
+  // Reset failed attempts on successful login
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { 
+      failedAttempts: 0,
+      lastFailedAttempt: null,
+      rememberMe: rememberMe // Update rememberMe field in database
+    }
+  });
 
   // Generowanie kodu 2FA jeśli opcja "Remember Me" nie jest zaznaczona
   if (!rememberMe) {
