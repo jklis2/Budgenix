@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthInput from "@/components/ui/AuthInput";
 
 export default function LoginPage() {
@@ -11,40 +11,61 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [show2FA, setShow2FA] = useState(false);
   const [code, setCode] = useState("");
-
+  
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect") || "/dashboard";
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push(redirectPath);
+    }
+  }, [redirectPath, router]);
 
   const handleLogin = async () => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password, rememberMe }),
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password, rememberMe }),
+        headers: { "Content-Type": "application/json" },
+      });
 
-    const data = await res.json();
-    if (data.message === "2FA code sent to email") {
-      setShow2FA(true);
-    } else if (data.token) {
-      localStorage.setItem("token", data.token);
-      router.push("/dashboard"); // Przekierowanie po zalogowaniu
-    } else {
-      setMessage(data.message || data.error);
+      const data = await res.json();
+      if (data.message === "2FA code sent to email") {
+        setShow2FA(true);
+        setMessage("A verification code has been sent to your email.");
+      } else if (data.token) {
+        localStorage.setItem("token", data.token);
+        router.push(redirectPath); // Redirect to the original page user was trying to access
+      } else {
+        setMessage(data.error || "Login failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setMessage("An error occurred. Please try again later.");
     }
   };
 
   const handle2FAVerify = async () => {
-    const res = await fetch("/api/auth/verify-2fa", {
-      method: "POST",
-      body: JSON.stringify({ email, code }),
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      const res = await fetch("/api/auth/verify-2fa", {
+        method: "POST",
+        body: JSON.stringify({ email, code }),
+        headers: { "Content-Type": "application/json" },
+      });
 
-    const data = await res.json();
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      router.push("/dashboard"); // Przekierowanie po pomyślnej weryfikacji 2FA
-    } else {
-      setMessage(data.message || data.error);
+      const data = await res.json();
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        router.push(redirectPath); // Redirect to the original page user was trying to access
+      } else {
+        setMessage(data.error || "Verification failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("2FA verification error:", error);
+      setMessage("An error occurred. Please try again later.");
     }
   };
 
