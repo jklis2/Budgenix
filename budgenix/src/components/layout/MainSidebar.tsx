@@ -14,7 +14,8 @@ export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
   return (
     <aside className={`bg-gradient-to-b from-indigo-900 to-indigo-800 text-white w-64 h-screen fixed top-0 left-0 shadow-xl transition-all duration-300 ease-in-out transform ${
       isOpen ? 'translate-x-0' : '-translate-x-full'
-    } z-50`}>
+    } z-50 flex flex-col`}>
+      {/* Header z logo */}
       <div className="h-16 flex items-center justify-center border-b border-indigo-700">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
@@ -26,7 +27,8 @@ export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
         </div>
       </div>
       
-      <div className="mt-6 px-4">
+      {/* Sekcja balansu */}
+      <div className="px-4 mt-6">
         <div className="bg-indigo-700/30 rounded-lg p-3 mb-6">
           <div className="text-xs text-indigo-200 uppercase font-semibold mb-1">Twój balans</div>
           <div className="text-2xl font-bold">0,00 zł</div>
@@ -39,7 +41,8 @@ export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
         </div>
       </div>
       
-      <nav className="mt-2 px-3">
+      {/* Menu */}
+      <div className="px-3 overflow-y-auto">
         <div className="text-xs text-indigo-300 uppercase font-semibold px-4 mb-2">Menu</div>
         <ul className="space-y-1">
           {sidebarTabs.map((tab) => {
@@ -73,15 +76,6 @@ export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
             );
           })}
         </ul>
-      </nav>
-      
-      <div className="absolute bottom-4 left-0 right-0 px-4">
-        <div className="bg-indigo-700/20 rounded-lg p-3 text-center">
-          <div className="text-xs text-indigo-200 mb-2">Potrzebujesz pomocy?</div>
-          <button className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white py-1.5 px-3 rounded-md transition-colors w-full">
-            Centrum wsparcia
-          </button>
-        </div>
       </div>
     </aside>
   );
