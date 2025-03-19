@@ -80,9 +80,9 @@ export default function MainNavbar({
   };
 
   return (
-    <nav className={`bg-blue-500 text-white h-16 flex items-center justify-between px-4 transition-all ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
+    <nav className={`bg-blue-500 text-white h-16 flex items-center justify-between px-4 transition-all ${isSidebarOpen ? "ml-72" : "ml-0"}`}>
       <div className="flex items-center">
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mr-4">
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mr-4 cursor-pointer">
           <Image
             src={isSidebarOpen ? "/icons/closeSidebar.svg" : "/icons/openSidebar.svg"}
             alt="Toggle Sidebar"
@@ -90,7 +90,6 @@ export default function MainNavbar({
             height={24}
           />
         </button>
-        <span className="text-lg font-semibold">Main Navbar</span>
       </div>
       
       {userEmail && (
@@ -106,10 +105,30 @@ export default function MainNavbar({
           {dropdownOpen && (
             <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 text-gray-800">
               <button
-                onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+                onClick={() => router.push('/dashboard/settings')}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center cursor-pointer"
               >
-                Logout
+                <Image 
+                  src="/icons/settings.svg" 
+                  alt="Settings icon" 
+                  width={20} 
+                  height={20} 
+                  className="mr-3"
+                />
+                Ustawienia
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors flex items-center cursor-pointer"
+              >
+                <Image 
+                  src="/icons/logout.svg" 
+                  alt="Logout icon" 
+                  width={20} 
+                  height={20} 
+                  className="mr-3"
+                />
+                Wyloguj
               </button>
             </div>
           )}

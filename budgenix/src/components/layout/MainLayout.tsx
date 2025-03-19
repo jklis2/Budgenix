@@ -12,7 +12,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <MainNavbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
       <div className={`flex-grow transition-all ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
         <MainSidebar isOpen={isSidebarOpen} />
-        <main className="p-6">
+        <main className="pt-6 pl-14">
           {children}
         </main>
       </div>
