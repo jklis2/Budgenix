@@ -1,0 +1,75 @@
+import React from 'react';
+import { Transaction } from '@/constants/transactionsData';
+import TransactionListItem from './TransactionListItem';
+
+interface TransactionTableProps {
+  transactions: Transaction[];
+  selectedTransaction: number | null;
+  setSelectedTransaction: (id: number) => void;
+  totalCount: number;
+}
+
+const TransactionTable: React.FC<TransactionTableProps> = ({
+  transactions,
+  selectedTransaction,
+  setSelectedTransaction,
+  totalCount
+}) => {
+  if (transactions.length === 0) {
+    return (
+      <div className="p-6 text-center">
+        <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">Brak transakcji</h3>
+        <p className="text-gray-500">Nie znaleziono transakcji spełniających kryteria wyszukiwania.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+              <th className="px-6 py-3 border-b border-gray-200">Nazwa</th>
+              <th className="px-6 py-3 border-b border-gray-200">Kategoria</th>
+              <th className="px-6 py-3 border-b border-gray-200">Data</th>
+              <th className="px-6 py-3 border-b border-gray-200 text-right">Kwota</th>
+              <th className="px-6 py-3 border-b border-gray-200 text-right">Akcje</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {transactions.map((transaction) => (
+              <TransactionListItem 
+                key={transaction.id}
+                transaction={transaction}
+                isSelected={selectedTransaction === transaction.id}
+                onSelect={setSelectedTransaction}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+        <div className="text-sm text-gray-700">
+          Pokazano <span className="font-medium">{transactions.length}</span> z <span className="font-medium">{totalCount}</span> transakcji
+        </div>
+        <div className="flex space-x-2">
+          <button className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            Poprzednia
+          </button>
+          <button className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            Następna
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default TransactionTable;
