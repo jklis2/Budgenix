@@ -32,7 +32,7 @@ export function QuickActionCard({
       <p className={`${textColor} mb-4`}>{description}</p>
       <button 
         onClick={onClick}
-        className={`w-full bg-white text-${gradientFrom.replace('from-', '')} py-2 rounded-lg font-medium hover:bg-${gradientFrom.replace('from-', '')}-50 transition-colors`}
+        className={`w-full bg-white text-${gradientFrom} py-2 rounded-lg font-medium hover:bg-${gradientFrom}-50 transition-colors`}
       >
         {buttonText}
       </button>

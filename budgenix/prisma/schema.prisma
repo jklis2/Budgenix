@@ -8,128 +8,128 @@ datasource db {
 }
 
 model User {
-  id                String              @id @default(uuid())
-  email             String              @unique
+  id                String         @id @default(uuid())
+  email             String         @unique
   password          String
-  isActive          Boolean             @default(false)
+  isActive          Boolean        @default(false)
   activationToken   String?
   twoFACode         String?
   twoFAExpiry       DateTime?
-  rememberMe        Boolean             @default(false)
-  failedAttempts    Int                 @default(0)
+  rememberMe        Boolean        @default(false)
+  failedAttempts    Int            @default(0)
   lastFailedAttempt DateTime?
   firstName         String?
   lastName          String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   accounts          Account[]
-  categories        Category[]
-  transactions      Transaction[]
   budgets           Budget[]
+  categories        Category[]
   savingsGoals      SavingsGoal[]
   subscriptions     Subscription[]
+  transactions      Transaction[]
 }
 
 model Account {
-  id            String      @id @default(uuid())
-  name          String
-  balance       Float
-  accountType   String      // e.g., "Checking", "Savings", "Credit Card"
-  currency      String      @default("PLN")
-  isDefault     Boolean     @default(false)
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  transactions  Transaction[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String        @id @default(uuid())
+  name         String
+  balance      Float
+  accountType  String
+  currency     String        @default("PLN")
+  isDefault    Boolean       @default(false)
+  userId       String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  transactions Transaction[]
 }
 
 model Category {
-  id            String      @id @default(uuid())
+  id            String         @id @default(uuid())
   name          String
-  icon          String      // Emoji or icon identifier
-  color         String      // Color code or name for UI
-  isIncome      Boolean     @default(false)
-  isDefault     Boolean     @default(false)
+  icon          String
+  color         String
+  isIncome      Boolean        @default(false)
+  isDefault     Boolean        @default(false)
   userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  transactions  Transaction[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   budgetItems   BudgetItem[]
+  user          User           @relation(fields: [userId], references: [id], onUpdate: NoAction)
   subscriptions Subscription[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  transactions  Transaction[]
 }
 
 model Transaction {
-  id              String      @id @default(uuid())
-  title           String
-  amount          Float
-  date            DateTime
-  notes           String?
-  paymentMethod   String
-  isRecurring     Boolean     @default(false)
-  categoryId      String
-  category        Category    @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  accountId       String
-  account         Account     @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id            String   @id @default(uuid())
+  title         String
+  amount        Float
+  date          DateTime
+  notes         String?
+  paymentMethod String
+  isRecurring   Boolean  @default(false)
+  categoryId    String
+  accountId     String
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  account       Account  @relation(fields: [accountId], references: [id], onUpdate: NoAction)
+  category      Category @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
+  user          User     @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }
 
 model Budget {
-  id              String      @id @default(uuid())
-  name            String
-  startDate       DateTime
-  endDate         DateTime
-  totalAmount     Float
-  isActive        Boolean     @default(true)
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  budgetItems     BudgetItem[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id          String       @id @default(uuid())
+  name        String
+  startDate   DateTime
+  endDate     DateTime
+  totalAmount Float
+  isActive    Boolean      @default(true)
+  userId      String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  budgetItems BudgetItem[]
 }
 
 model BudgetItem {
-  id              String      @id @default(uuid())
+  id              String   @id @default(uuid())
   allocatedAmount Float
   budgetId        String
-  budget          Budget      @relation(fields: [budgetId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   categoryId      String
-  category        Category    @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  budget          Budget   @relation(fields: [budgetId], references: [id], onUpdate: NoAction)
+  category        Category @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
 }
 
 model SavingsGoal {
-  id              String      @id @default(uuid())
-  name            String
-  targetAmount    Float
-  currentAmount   Float       @default(0)
-  startDate       DateTime
-  targetDate      DateTime
-  isCompleted     Boolean     @default(false)
-  icon            String?
-  color           String?
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  startDate     DateTime
+  targetDate    DateTime
+  isCompleted   Boolean  @default(false)
+  icon          String?
+  color         String?
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }
 
 model Subscription {
-  id              String      @id @default(uuid())
+  id              String    @id @default(uuid())
   name            String
   amount          Float
-  billingCycle    String      // "Monthly", "Yearly", etc.
+  billingCycle    String
   startDate       DateTime
   nextBillingDate DateTime
   categoryId      String?
-  category        Category?   @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user            User      @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }
