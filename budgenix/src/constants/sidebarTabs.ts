@@ -11,6 +11,11 @@ export const sidebarTabs: SidebarTab[] = [
     iconPath: "/icons/dashboard.svg"
   },
   {
+    label: "Konta",
+    path: "/dashboard/accounts",
+    iconPath: "/icons/budget.svg"
+  },
+  {
     label: "Budżet",
     path: "/dashboard/budget",
     iconPath: "/icons/budget.svg"

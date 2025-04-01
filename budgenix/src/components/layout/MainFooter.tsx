@@ -26,9 +26,6 @@ export default function MainFooter({ isSidebarOpen }: { isSidebarOpen: boolean }
           <Link href="/terms" className="text-xs text-gray-600 hover:text-indigo-600 transition-colors">
             Warunki użytkowania
           </Link>
-          <Link href="/contact" className="text-xs text-gray-600 hover:text-indigo-600 transition-colors">
-            Kontakt
-          </Link>
         </div>
       </div>
     </footer>
