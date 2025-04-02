@@ -1,26 +1,5 @@
-// Transaction data for the transactions page
-// This simulates data that would come from a database
+// Utility functions for transactions
 import React from 'react';
-
-export interface Transaction {
-  id: number;
-  title: string;
-  amount: number;
-  date: string;
-  category: string;
-  paymentMethod: string;
-}
-
-export const transactions: Transaction[] = [
-  { id: 1, title: 'Zakupy spożywcze', amount: -245.50, date: '2025-03-18', category: 'Żywność', paymentMethod: 'Karta debetowa' },
-  { id: 2, title: 'Wynagrodzenie', amount: 8500, date: '2025-03-15', category: 'Przychód', paymentMethod: 'Przelew' },
-  { id: 3, title: 'Netflix', amount: -49, date: '2025-03-12', category: 'Subskrypcje', paymentMethod: 'Karta kredytowa' },
-  { id: 4, title: 'Paliwo', amount: -320, date: '2025-03-10', category: 'Transport', paymentMethod: 'Karta debetowa' },
-  { id: 5, title: 'Restauracja', amount: -180, date: '2025-03-08', category: 'Rozrywka', paymentMethod: 'Gotówka' },
-  { id: 6, title: 'Czynsz', amount: -1800, date: '2025-03-05', category: 'Mieszkanie', paymentMethod: 'Przelew' },
-  { id: 7, title: 'Sprzedaż na Allegro', amount: 350, date: '2025-03-03', category: 'Przychód', paymentMethod: 'Przelew' },
-  { id: 8, title: 'Rachunek za prąd', amount: -220, date: '2025-03-02', category: 'Rachunki', paymentMethod: 'Przelew' },
-];
 
 export interface TransactionSummaryCardProps {
   title: string;
@@ -38,8 +17,9 @@ export const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('pl-PL', {
+export const formatDate = (dateString: string | Date) => {
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  return date.toLocaleDateString('pl-PL', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -73,3 +53,26 @@ export const transactionTips: TipCardData[] = [
     ]
   }
 ];
+
+// Funkcja do generowania kolorów dla kategorii
+export const getCategoryColor = (categoryName: string, isIncome: boolean): string => {
+  if (isIncome) {
+    return 'bg-emerald-100 text-emerald-800';
+  }
+  
+  // Mapowanie kategorii na kolory
+  const categoryColors: Record<string, string> = {
+    'Żywność': 'bg-orange-100 text-orange-800',
+    'Transport': 'bg-blue-100 text-blue-800',
+    'Mieszkanie': 'bg-purple-100 text-purple-800',
+    'Rozrywka': 'bg-pink-100 text-pink-800',
+    'Subskrypcje': 'bg-indigo-100 text-indigo-800',
+    'Rachunki': 'bg-red-100 text-red-800',
+    'Zdrowie': 'bg-green-100 text-green-800',
+    'Edukacja': 'bg-yellow-100 text-yellow-800',
+    'Odzież': 'bg-teal-100 text-teal-800',
+    'Inne': 'bg-gray-100 text-gray-800'
+  };
+  
+  return categoryColors[categoryName] || 'bg-gray-100 text-gray-800';
+};

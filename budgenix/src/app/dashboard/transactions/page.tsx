@@ -1,36 +1,163 @@
 "use client";
-import { useState } from 'react';
-import { transactions, formatCurrency, transactionTips } from '@/constants/transactionsData';
+import { useState, useEffect } from 'react';
+import { formatCurrency, transactionTips } from '@/constants/transactionsData';
 import TransactionSummaryCard from '@/components/ui/TransactionSummaryCard';
 import TransactionTable from '@/components/ui/TransactionTable';
-import { SearchBar } from '@/components/ui/SearchBar';
 import { TipCard } from '@/components/ui/TipCard';
+import TransactionFiltersComponent from '@/components/ui/TransactionFilters';
+import { 
+  Transaction, 
+  TransactionFilters, 
+  getTransactions, 
+  getTransactionStats, 
+  Category, 
+  Account, 
+  deleteTransaction, 
+  getCategories, 
+  getAccounts,
+  createTransaction,
+  updateTransaction,
+  TransactionCreateInput
+} from '@/lib/services/transactionService';
+import TransactionModal from '@/components/ui/TransactionModal';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import Toast from '@/components/ui/Toast';
 
 export default function Transactions() {
-  const [selectedTransaction, setSelectedTransaction] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [filters, setFilters] = useState<TransactionFilters>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({ income: 0, expenses: 0, balance: 0 });
+  const [totalCount, setTotalCount] = useState(0);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Get all unique categories
-  const categories = ['all', ...new Set(transactions.map(t => t.category))];
+  // Modalne
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | undefined>(undefined);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   
-  // Filter transactions
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || transaction.category === filterCategory;
-    return matchesSearch && matchesCategory;
+  // Toast
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' }>({
+    visible: false,
+    message: '',
+    type: 'success'
   });
-  
-  // Calculate totals
-  const income = filteredTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-  const expenses = filteredTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  const balance = income - expenses;
-  
+
+  // Pobieranie danych
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await getTransactions(filters);
+        setTransactions(response.transactions);
+        setTotalCount(response.totalCount);
+        
+        // Pobieranie kategorii i kont z API
+        try {
+          const categoriesData = await getCategories();
+          setCategories(categoriesData);
+        } catch (error) {
+          console.error('Błąd podczas pobierania kategorii:', error);
+          setCategories([]);
+        }
+        
+        try {
+          const accountsData = await getAccounts();
+          setAccounts(accountsData);
+        } catch (error) {
+          console.error('Błąd podczas pobierania kont:', error);
+          setAccounts([]);
+        }
+        
+        // Pobieranie statystyk
+        const statsResponse = await getTransactionStats();
+        setStats({
+          income: statsResponse.totalIncome,
+          expenses: Math.abs(statsResponse.totalExpense),
+          balance: statsResponse.balance
+        });
+      } catch (error) {
+        console.error('Błąd podczas pobierania danych:', error);
+        showToast('Wystąpił błąd podczas pobierania danych', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [filters]);
+
+  // Obsługa filtrów
+  const handleFilterChange = (newFilters: TransactionFilters) => {
+    setFilters(newFilters);
+  };
+
+  // Obsługa toastów
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+  // Obsługa edycji transakcji
+  const handleEditTransaction = (transaction: Transaction) => {
+    setTransactionToEdit(transaction);
+    setIsTransactionModalOpen(true);
+  };
+
+  // Obsługa usuwania transakcji
+  const handleDeleteTransaction = (transaction: Transaction) => {
+    setTransactionToDelete(transaction);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Obsługa formularza transakcji
+  const handleSubmitTransaction = async (data: Partial<Transaction>) => {
+    try {
+      setIsSubmitting(true);
+      console.log('Dane transakcji do zapisania:', data);
+      
+      if (transactionToEdit) {
+        // Aktualizacja istniejącej transakcji
+        await updateTransaction(transactionToEdit.id, data);
+        showToast('Transakcja została zaktualizowana', 'success');
+      } else {
+        // Tworzenie nowej transakcji
+        const newTransactionData: TransactionCreateInput = {
+          title: data.title || '',
+          amount: data.amount || 0,
+          date: data.date || new Date(),
+          description: data.description,
+          paymentMethod: data.paymentMethod || 'Karta debetowa',
+          isRecurring: data.isRecurring || false,
+          categoryId: data.categoryId || '',
+          accountId: data.accountId || ''
+        };
+        await createTransaction(newTransactionData);
+        showToast('Transakcja została dodana', 'success');
+      }
+      
+      setIsTransactionModalOpen(false);
+      // Odświeżenie danych
+      handleFilterChange(filters);
+    } catch (error) {
+      console.error('Błąd podczas zapisywania transakcji:', error);
+      showToast('Wystąpił błąd podczas zapisywania transakcji', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Transaction summary cards data
   const summaryCards = [
     {
       title: 'Przychody',
-      amount: formatCurrency(income),
+      amount: formatCurrency(stats.income),
       colorClass: 'text-emerald-600',
       bgColorClass: 'bg-emerald-100',
       icon: (
@@ -41,7 +168,7 @@ export default function Transactions() {
     },
     {
       title: 'Wydatki',
-      amount: formatCurrency(expenses),
+      amount: formatCurrency(stats.expenses),
       colorClass: 'text-red-600',
       bgColorClass: 'bg-red-100',
       icon: (
@@ -52,8 +179,8 @@ export default function Transactions() {
     },
     {
       title: 'Bilans',
-      amount: formatCurrency(balance),
-      colorClass: balance >= 0 ? 'text-blue-600' : 'text-red-600',
+      amount: formatCurrency(stats.balance),
+      colorClass: stats.balance >= 0 ? 'text-blue-600' : 'text-red-600',
       bgColorClass: 'bg-blue-100',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,6 +206,15 @@ export default function Transactions() {
   
   return (
     <div className="space-y-8">
+      {/* Toast notification */}
+      {toast.visible && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(prev => ({ ...prev, visible: false }))} 
+        />
+      )}
+      
       {/* Page header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
@@ -86,7 +222,13 @@ export default function Transactions() {
           <p className="text-gray-500 mt-1">Przeglądaj i zarządzaj swoimi transakcjami</p>
         </div>
         <div className="mt-4 md:mt-0">
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+          <button 
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+            onClick={() => {
+              setTransactionToEdit(undefined);
+              setIsTransactionModalOpen(true);
+            }}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
@@ -109,45 +251,13 @@ export default function Transactions() {
         ))}
       </div>
       
-      {/* Filters and search */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-grow">
-            <SearchBar
-              id="transaction-search"
-              label="Szukaj transakcji"
-              placeholder="Wyszukaj po nazwie..."
-              value={searchTerm}
-              onChange={(value) => setSearchTerm(value)}
-            />
-          </div>
-          
-          <div className="md:w-64">
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
-            <select
-              id="category"
-              className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-            >
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category === 'all' ? 'Wszystkie kategorie' : category}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="md:w-48 flex items-end">
-            <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md transition-colors flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <span>Więcej filtrów</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Filters */}
+      <TransactionFiltersComponent
+        categories={categories}
+        accounts={accounts}
+        onFilterChange={handleFilterChange}
+        initialFilters={filters}
+      />
       
       {/* Transactions list */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -155,12 +265,41 @@ export default function Transactions() {
           <h2 className="text-lg font-semibold text-gray-800">Historia transakcji</h2>
         </div>
         
-        <TransactionTable
-          transactions={filteredTransactions}
-          selectedTransaction={selectedTransaction}
-          setSelectedTransaction={setSelectedTransaction}
-          totalCount={transactions.length}
-        />
+        {isLoading ? (
+          <div className="p-6 text-center">
+            <svg className="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="mt-2 text-gray-600">Ładowanie transakcji...</p>
+          </div>
+        ) : transactions.length > 0 ? (
+          <TransactionTable
+            transactions={transactions}
+            selectedTransaction={selectedTransactionId}
+            setSelectedTransaction={setSelectedTransactionId}
+            totalCount={totalCount}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+            isLoading={isLoading}
+          />
+        ) : (
+          <div className="p-6 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="mt-2 text-gray-600">Brak transakcji spełniających kryteria</p>
+            <button 
+              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              onClick={() => {
+                setTransactionToEdit(undefined);
+                setIsTransactionModalOpen(true);
+              }}
+            >
+              Dodaj pierwszą transakcję
+            </button>
+          </div>
+        )}
       </div>
       
       {/* Export options */}
@@ -176,6 +315,44 @@ export default function Transactions() {
           contentColor={tip.descriptionColorClass}
         />
       ))}
+      
+      {/* Transaction Modal */}
+      {isTransactionModalOpen && (
+        <TransactionModal
+          isOpen={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+          transaction={transactionToEdit}
+          categories={categories}
+          accounts={accounts}
+          onSubmit={handleSubmitTransaction}
+          isSubmitting={isSubmitting}
+          title={transactionToEdit ? "Edytuj transakcję" : "Dodaj nową transakcję"}
+        />
+      )}
+      
+      {/* Confirmation Modal */}
+      {isDeleteModalOpen && transactionToDelete && (
+        <ConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={async () => {
+            try {
+              if (transactionToDelete) {
+                await deleteTransaction(transactionToDelete.id);
+                setIsDeleteModalOpen(false);
+                showToast('Transakcja została usunięta', 'success');
+                // Odświeżenie danych
+                handleFilterChange(filters);
+              }
+            } catch (error) {
+              console.error('Błąd podczas usuwania transakcji:', error);
+              showToast('Wystąpił błąd podczas usuwania transakcji', 'error');
+            }
+          }}
+          title="Usuń transakcję"
+          message={`Czy na pewno chcesz usunąć transakcję "${transactionToDelete.title}"? Ta operacja jest nieodwracalna.`}
+        />
+      )}
     </div>
   );
 }

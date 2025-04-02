@@ -5,7 +5,7 @@ interface SearchBarProps {
   label?: string;
   placeholder: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: ((e: React.ChangeEvent<HTMLInputElement>) => void) | ((value: string) => void);
   onSearch?: (term: string) => void;
 }
 
@@ -24,6 +24,18 @@ export function SearchBar({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (typeof onChange === 'function') {
+      if (onChange.length === 1) {
+        // Jeśli funkcja przyjmuje jeden argument, zakładamy że jest to wartość
+        (onChange as (value: string) => void)(e.target.value);
+      } else {
+        // W przeciwnym razie przekazujemy cały event
+        (onChange as (e: React.ChangeEvent<HTMLInputElement>) => void)(e);
+      }
+    }
+  };
+
   return (
     <div>
       {label && <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
@@ -39,7 +51,7 @@ export function SearchBar({
           className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           placeholder={placeholder}
           value={value}
-          onChange={onChange}
+          onChange={handleChange}
         />
       </form>
     </div>
