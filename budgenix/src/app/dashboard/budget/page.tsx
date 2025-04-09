@@ -1,11 +1,86 @@
 "use client";
+import { useState, useEffect } from 'react';
 import { BudgetSummaryCard } from '@/components/ui/BudgetSummaryCard';
 import { BudgetCategoryCard } from '@/components/ui/BudgetCategoryCard';
 import { QuickActionCard } from '@/components/ui/QuickActionCard';
 import { TipCard } from '@/components/ui/TipCard';
-import { budgetSummaryData, budgetCategories, budgetActionsData, budgetTip } from '@/constants/budgetData';
+import { getActiveBudget, getBudgetStats, BudgetStats, BudgetWithItems, getBudgets } from '@/services/budgetService';
+import { budgetTip } from '@/constants/budgetData';
+import { CreateBudgetModal } from '@/components/modals/CreateBudgetModal';
+import { EditBudgetModal } from '@/components/modals/EditBudgetModal';
 
 export default function Budget() {
+  // State for budget data
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [budget, setBudget] = useState<BudgetWithItems | null>(null);
+  const [budgetStats, setBudgetStats] = useState<BudgetStats | null>(null);
+  
+  // State for modals
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showBudgetSelector, setShowBudgetSelector] = useState(false);
+  const [availableBudgets, setAvailableBudgets] = useState<BudgetWithItems[]>([]);
+
+  // Temporary user ID (in a real app, this would come from authentication)
+  // Musimy użyć identyfikatora użytkownika, który faktycznie istnieje w bazie danych
+  // W rzeczywistej aplikacji pobralibyśmy to z sesji użytkownika
+  const userId = "ebbbb137-6150-409f-85d7-fd79fa505e55"; // Prawidłowe ID użytkownika
+
+  // Fetch budget data
+  useEffect(() => {
+    const fetchBudgetData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch active budget
+        const activeBudget = await getActiveBudget(userId);
+        setBudget(activeBudget);
+        
+        // Fetch budget stats
+        const stats = await getBudgetStats(activeBudget.id);
+        setBudgetStats(stats);
+        
+        // Fetch all available budgets
+        const budgets = await getBudgets(userId);
+        setAvailableBudgets(budgets);
+      } catch (err) {
+        console.error('Error fetching budget data:', err);
+        setError('Nie udało się pobrać danych budżetu');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBudgetData();
+  }, [userId]);
+  
+  // Handle refresh after creating or editing budget
+  const handleBudgetChange = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch all available budgets
+      const budgets = await getBudgets(userId);
+      setAvailableBudgets(budgets);
+      
+      // Refresh active budget
+      const activeBudget = await getActiveBudget(userId);
+      setBudget(activeBudget);
+      
+      // Get budget statistics
+      const stats = await getBudgetStats(activeBudget.id);
+      setBudgetStats(stats);
+    } catch (err) {
+      console.error('Error refreshing budget data:', err);
+      setError('Nie udało się odświeżyć danych budżetu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pl-PL', {
@@ -40,6 +115,45 @@ export default function Budget() {
     </svg>
   );
   
+  // Render loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <span className="ml-3 text-gray-600">Ładowanie danych budżetu...</span>
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <p className="font-medium">Błąd</p>
+        <p>{error}</p>
+        <button 
+          className="mt-2 bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded transition-colors"
+          onClick={() => window.location.reload()}
+        >
+          Odśwież stronę
+        </button>
+      </div>
+    );
+  }
+
+  // If no budget data is available yet
+  if (!budgetStats || !budget) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <p className="font-medium">Brak danych budżetu</p>
+        <p>Nie znaleziono aktywnego budżetu. Utwórz nowy budżet, aby rozpocząć.</p>
+        <button className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition-colors">
+          Utwórz budżet
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Page header */}
@@ -49,13 +163,48 @@ export default function Budget() {
           <p className="text-gray-500 mt-1">Planuj i zarządzaj swoimi wydatkami</p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-3">
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-4 py-2 flex items-center">
-            <span className="text-gray-700 font-medium">{budgetSummaryData.currentMonth}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-            </svg>
+          <div className="relative">
+            <div 
+              className="bg-white border border-gray-200 rounded-lg shadow-sm px-4 py-2 flex items-center cursor-pointer hover:bg-gray-50"
+              onClick={() => setShowBudgetSelector(!showBudgetSelector)}
+            >
+              <span className="text-gray-700 font-medium">{budgetStats.summary.currentMonth}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+              </svg>
+            </div>
+            
+            {showBudgetSelector && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {availableBudgets.map((budgetItem) => (
+                  <div 
+                    key={budgetItem.id} 
+                    className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${budget?.id === budgetItem.id ? 'bg-indigo-50 font-medium' : ''}`}
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+                        const stats = await getBudgetStats(budgetItem.id);
+                        setBudget(budgetItem);
+                        setBudgetStats(stats);
+                        setShowBudgetSelector(false);
+                      } catch (err) {
+                        console.error('Error switching budget:', err);
+                        setError('Nie udało się przełączyć budżetu');
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    {budgetItem.name}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
@@ -71,21 +220,21 @@ export default function Budget() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <BudgetSummaryCard
             title="Całkowity budżet"
-            value={formatCurrency(budgetSummaryData.totalBudget)}
+            value={formatCurrency(budgetStats.summary.totalBudget)}
             bgColor="bg-indigo-50"
             textColor="text-indigo-700"
           />
           
           <BudgetSummaryCard
             title="Pozostało"
-            value={formatCurrency(budgetSummaryData.remainingAmount)}
+            value={formatCurrency(budgetStats.summary.remainingAmount)}
             bgColor="bg-emerald-50"
             textColor="text-emerald-700"
           />
           
           <BudgetSummaryCard
             title="Wydano"
-            value={formatCurrency(budgetSummaryData.spentAmount)}
+            value={formatCurrency(budgetStats.summary.spentAmount)}
             bgColor="bg-amber-50"
             textColor="text-amber-700"
           />
@@ -93,13 +242,13 @@ export default function Budget() {
         
         <div className="mb-2 flex justify-between items-center">
           <div className="text-sm font-medium text-gray-700">Postęp budżetu</div>
-          <div className="text-sm font-medium text-gray-700">{budgetSummaryData.spentPercentage}%</div>
+          <div className="text-sm font-medium text-gray-700">{budgetStats.summary.spentPercentage}%</div>
         </div>
         
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div 
-            className={`h-2.5 rounded-full ${budgetSummaryData.spentPercentage > 90 ? 'bg-red-600' : budgetSummaryData.spentPercentage > 75 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-            style={{ width: `${budgetSummaryData.spentPercentage}%` }}
+            className={`h-2.5 rounded-full ${budgetStats.summary.spentPercentage > 90 ? 'bg-red-600' : budgetStats.summary.spentPercentage > 75 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+            style={{ width: `${budgetStats.summary.spentPercentage}%` }}
           ></div>
         </div>
       </div>
@@ -117,7 +266,7 @@ export default function Budget() {
         </div>
         
         <div className="space-y-6">
-          {budgetCategories.map((category) => (
+          {budgetStats.categories.map((category) => (
             <BudgetCategoryCard
               key={category.id}
               name={category.name}
@@ -132,19 +281,44 @@ export default function Budget() {
       
       {/* Budget actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {budgetActionsData.map((action) => (
-          <QuickActionCard
-            key={action.id}
-            title={action.title}
-            description={action.description}
-            icon={getBudgetActionIcon(action.icon)}
-            buttonText={action.buttonText}
-            gradientFrom={action.gradientFrom}
-            gradientTo={action.gradientTo}
-            textColor={action.textColor}
-          />
-        ))}
+        <QuickActionCard
+          key="edit-budget"
+          title="Dostosuj budżet"
+          description="Dostosuj swój budżet do zmieniających się potrzeb i celów finansowych"
+          icon={getBudgetActionIcon('adjust')}
+          buttonText="Edytuj budżet"
+          gradientFrom="indigo-600"
+          gradientTo="indigo-800"
+          textColor="text-indigo-200"
+          onClick={() => setIsEditModalOpen(true)}
+        />
+        <QuickActionCard
+          key="budget-report"
+          title="Raport budżetu"
+          description="Generuj szczegółowy raport z wydatków i oszczędności w tym miesiącu"
+          icon={getBudgetActionIcon('report')}
+          buttonText="Generuj raport"
+          gradientFrom="emerald-600"
+          gradientTo="emerald-800"
+          textColor="text-emerald-200"
+          onClick={() => alert('Funkcja generowania raportu będzie dostępna wkrótce')}
+        />
       </div>
+      
+      {/* Modals */}
+      <CreateBudgetModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleBudgetChange}
+        userId={userId}
+      />
+      
+      <EditBudgetModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleBudgetChange}
+        budget={budget}
+      />
       
       {/* Budget tips */}
       <TipCard
