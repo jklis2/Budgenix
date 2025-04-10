@@ -1,5 +1,12 @@
 import React from 'react';
-import { SavingsProgressCardProps, formatCurrency } from '@/constants/savingsGoalsData';
+import { formatCurrency } from '@/services/savingsGoalClientService';
+
+export interface SavingsProgressCardProps {
+  totalSaved: number;
+  totalTarget: number;
+  progress: number;
+  remainingAmount: number;
+}
 
 const SavingsProgressCard: React.FC<SavingsProgressCardProps> = ({
   totalSaved,

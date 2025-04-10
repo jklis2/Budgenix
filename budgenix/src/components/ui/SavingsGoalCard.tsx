@@ -1,5 +1,18 @@
 import React from 'react';
-import { SavingsGoalCardProps } from '@/constants/savingsGoalsData';
+import { SavingsGoalWithContributions } from '@/services/savingsGoalClientService';
+
+export interface SavingsGoalCardProps {
+  goal: SavingsGoalWithContributions;
+  progress: number;
+  daysUntil: number;
+  monthlyContribution: number;
+  formattedCurrentAmount: string;
+  formattedTargetAmount: string;
+  formattedDeadline: string;
+  formattedMonthlyContribution: string;
+  onDelete: (id: string) => void;
+  onAddContribution: (id: string) => void;
+}
 
 const SavingsGoalCard: React.FC<SavingsGoalCardProps> = ({
   goal,
@@ -9,19 +22,20 @@ const SavingsGoalCard: React.FC<SavingsGoalCardProps> = ({
   formattedTargetAmount,
   formattedDeadline,
   formattedMonthlyContribution,
-  onDelete
+  onDelete,
+  onAddContribution
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center">
-            <div className={`w-12 h-12 rounded-full bg-${goal.color}-100 flex items-center justify-center mr-4`}>
-              <span className="text-2xl">{goal.icon}</span>
+            <div className={`w-12 h-12 rounded-full ${goal.color ? `bg-${goal.color}-100` : 'bg-indigo-100'} flex items-center justify-center mr-4`}>
+              <span className="text-2xl">{goal.icon || '💰'}</span>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-800">{goal.name}</h3>
-              <p className="text-sm text-gray-500">{goal.description}</p>
+              <p className="text-sm text-gray-500">Cel oszczędnościowy</p>
             </div>
           </div>
           <div className="flex space-x-2">
@@ -91,16 +105,20 @@ const SavingsGoalCard: React.FC<SavingsGoalCardProps> = ({
       
       <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          goal.priority === 'high' ? 'bg-red-100 text-red-800' : 
-          goal.priority === 'medium' ? 'bg-amber-100 text-amber-800' : 
-          'bg-emerald-100 text-emerald-800'
+          goal.isCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'
         }`}>
-          {goal.priority === 'high' ? 'Wysoki priorytet' : 
-           goal.priority === 'medium' ? 'Średni priorytet' : 
-           'Niski priorytet'}
+          {goal.isCompleted ? 'Ukończony' : 'W trakcie'}
         </span>
         
-        <button className="text-indigo-600 hover:text-indigo-900 text-sm font-medium flex items-center">
+        <button 
+          onClick={() => onAddContribution(goal.id)}
+          disabled={goal.isCompleted}
+          className={`text-sm font-medium flex items-center ${
+            goal.isCompleted 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-indigo-600 hover:text-indigo-900'
+          }`}
+        >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
