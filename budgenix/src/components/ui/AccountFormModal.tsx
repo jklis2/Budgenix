@@ -135,7 +135,7 @@ export default function AccountFormModal({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-4">
-            {account ? "Edit Account" : "Add New Account"}
+            {account ? "Edytuj Konto" : "Dodaj Nowe Konto"}
           </h2>
 
           {error && (
@@ -155,7 +155,7 @@ export default function AccountFormModal({
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Account Name
+                Nazwa Konta
               </label>
               <input
                 type="text"
@@ -165,7 +165,7 @@ export default function AccountFormModal({
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g. Main Checking Account"
+                placeholder="np. Główne Konto Osobiste"
               />
             </div>
 
@@ -174,7 +174,7 @@ export default function AccountFormModal({
                 htmlFor="balance"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Balance
+                Saldo
               </label>
               <input
                 type="number"
@@ -194,7 +194,7 @@ export default function AccountFormModal({
                 htmlFor="accountType"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Account Type
+                Typ Konta
               </label>
               <select
                 id="accountType"
@@ -217,7 +217,7 @@ export default function AccountFormModal({
                 htmlFor="currency"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Currency
+                Waluta
               </label>
               <select
                 id="currency"
@@ -249,11 +249,11 @@ export default function AccountFormModal({
                   htmlFor="isDefault"
                   className="ml-2 block text-sm text-gray-700"
                 >
-                  Set as default account
+                  Ustaw jako domyślne konto
                 </label>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                The default account will be used for transactions when no account is specified.
+                Domyślne konto będzie używane dla transakcji, gdy nie określono konta.
               </p>
             </div>
 
@@ -264,14 +264,14 @@ export default function AccountFormModal({
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={loading}
               >
-                Cancel
+                Anuluj
               </button>
               <button
                 type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 disabled={loading}
               >
-                {loading ? "Saving..." : account ? "Update Account" : "Create Account"}
+                {loading ? "Zapisywanie..." : account ? "Aktualizuj Konto" : "Utwórz Konto"}
               </button>
             </div>
           </form>

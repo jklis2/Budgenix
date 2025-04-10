@@ -1,5 +1,5 @@
 import React from 'react';
-import { Account, formatCurrency } from '@/constants/accountsData';
+import { Account, formatCurrency, accountTypes } from '@/constants/accountsData';
 import { FaEdit } from 'react-icons/fa';
 
 interface AccountCardProps {
@@ -9,6 +9,11 @@ interface AccountCardProps {
 }
 
 export const AccountCard: React.FC<AccountCardProps> = ({ account, onClick, onEdit }) => {
+  // Funkcja zwracająca polską etykietę dla angielskiego typu konta
+  const getAccountTypeLabel = (accountType: string): string => {
+    const foundType = accountTypes.find(type => type.value === accountType);
+    return foundType ? foundType.label : accountType;
+  };
   const getColorClasses = (accountType: string) => {
     const colorMap: Record<string, { bg: string, text: string, border: string }> = {
       'Checking': { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-100' },
@@ -49,7 +54,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({ account, onClick, onEd
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className={`font-semibold ${colorClasses.text}`}>{account.name}</h3>
-          <p className="text-sm text-gray-500 mt-1">{account.accountType}</p>
+          <p className="text-sm text-gray-500 mt-1">{getAccountTypeLabel(account.accountType)}</p>
         </div>
         <div className="flex items-center">
           {account.isDefault && (

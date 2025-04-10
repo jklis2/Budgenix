@@ -105,9 +105,9 @@ export default function Accounts() {
     <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Accounts</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Konta</h1>
           <p className="text-gray-600">
-            Total Balance: {formatCurrency(totalBalance)}
+            Całkowity bilans: {formatCurrency(totalBalance)}
           </p>
         </div>
         <div className="mt-4 md:mt-0 w-full md:w-auto">
@@ -116,17 +116,17 @@ export default function Accounts() {
             className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto"
           >
             <FaPlus className="mr-2" />
-            Add Account
+            Dodaj Konto
           </button>
         </div>
       </div>
 
       <div className="mb-6">
         <SearchBar 
-          placeholder="Search accounts..." 
+          placeholder="Wyszukaj konto..." 
           onSearch={handleSearch} 
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setSearchTerm(e.target.value)}
         />
       </div>
 
@@ -142,12 +142,12 @@ export default function Accounts() {
         </div>
       ) : filteredAccounts.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500 mb-4">No accounts found</p>
+          <p className="text-gray-500 mb-4">Nie znaleziono kont</p>
           <button
             onClick={handleAddAccount}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Add Your First Account
+            Dodaj swoje pierwsze konto
           </button>
         </div>
       ) : (
