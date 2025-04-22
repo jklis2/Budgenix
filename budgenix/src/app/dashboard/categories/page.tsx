@@ -1,16 +1,44 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CategoryStatCard } from '@/components/ui/CategoryStatCard';
 import { CategoryListItem } from '@/components/ui/CategoryListItem';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryModal } from '@/components/ui/CategoryModal';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
 import { getCategories, createCategory, updateCategory, deleteCategory, CategoryWithStats } from '@/lib/services/categoryService';
+import { getTransactions } from '@/lib/services/transactionService';
 import { toast } from 'react-hot-toast';
+
+// Definiujemy interfejsy dla danych z API - wykorzystujemy istniejace typy
+import { Transaction as ApiTransaction } from '@/lib/services/transactionService';
+
+interface BudgetItem {
+  id: string;
+  allocatedAmount: number;
+  budgetId: string;
+  categoryId: string;
+  category?: {
+    id: string;
+    name: string;
+  };
+}
+
+// Interfejs dla budżetu
+type Budget = {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  totalAmount: number;
+  isActive: boolean;
+  userId: string;
+  budgetItems: BudgetItem[];
+}
 
 export default function Categories() {
   // State
   const [categories, setCategories] = useState<CategoryWithStats[]>([]);
+  const [activeBudget, setActiveBudget] = useState<Budget | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
@@ -22,38 +50,146 @@ export default function Categories() {
   const [editingCategory, setEditingCategory] = useState<CategoryWithStats | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Fetch categories
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  // Pobieramy ID użytkownika z tokenu JWT
+  const [userId, setUserId] = useState<string | null>(null);
   
-  const fetchCategories = async () => {
+  // Definiujemy fetchCategories jako useCallback, aby zapobiec niepotrzebnym rerenderom
+  const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
       setIsError(false);
-      const data = await getCategories();
       
-      // Dodajemy tymczasowe dane budżetowe do kategorii
-      // W przyszłości będą one pobierane z API
-      const categoriesWithStats = data.map(category => ({
-        ...category,
-        budget: Math.floor(Math.random() * 3000) + 500,
-        spent: Math.floor(Math.random() * 2000),
-        transactions: Math.floor(Math.random() * 15) + 1
-      }));
+      if (!userId) {
+        console.error('Brak ID użytkownika');
+        setIsError(true);
+        return;
+      }
       
+      // Pobieramy kategorie
+      const categories = await getCategories();
+      
+      // Pobieramy aktywny budżet i statystyki
+      const activeBudgetResponse = await fetch(`/api/budgets/active?userId=${userId}`);
+      const activeBudget = await activeBudgetResponse.json() as Budget;
+      
+      console.log('Pobrano aktywny budżet:', activeBudget?.name);
+      
+      // Pobieramy transakcje dla okresu budżetowego przy użyciu serwisu transactionService
+      let transactions: ApiTransaction[] = [];
+      try {
+        // Używamy gotowego serwisu do pobierania transakcji, który obsługuje autoryzację JWT
+        const response = await getTransactions({
+          dateFrom: activeBudget.startDate,
+          dateTo: activeBudget.endDate,
+          limit: 1000 // Pobieramy dużą liczbę transakcji, żeby mieć pełny obraz
+        });
+        
+        transactions = response.transactions;
+        console.log('Pobrano transakcje z API:', transactions.length);
+        console.log('Przykładowa transakcja:', transactions[0]);
+      } catch (error) {
+        console.error('Błąd podczas pobierania transakcji:', error);
+        toast.error('Nie udało się pobrać transakcji. Spróbuj ponownie później.');
+      }
+      
+      console.log('Pobrane transakcje:', transactions);
+      console.log('Aktywny budżet:', activeBudget);
+      
+      // Obliczamy statystyki dla każdej kategorii
+      const categoriesWithStats = categories.map(category => {
+        // Znajdź odpowiedni item budżetowy dla tej kategorii
+        const budgetItem = activeBudget?.budgetItems?.find((item: BudgetItem) => 
+          item.categoryId === category.id || 
+          item.category?.id === category.id
+        );
+        
+        if (budgetItem) {
+          console.log(`Znaleziono budgetItem dla kategorii ${category.name}: ${budgetItem.allocatedAmount} zł`);
+        }
+        
+        // Znajdź transakcje dla tej kategorii
+        const categoryTransactions = transactions.filter(
+          (t: ApiTransaction) => t && (t.categoryId === category.id || t.category?.id === category.id)
+        );
+        
+        console.log(`Transakcje dla kategorii ${category.name}:`, categoryTransactions.length);
+        
+        // Obliczamy sumę faktycznych wydatków - bierzemy tylko transakcje ujemne (wydatki)
+        const negativeTransactions = categoryTransactions.filter(t => t.amount < 0);
+        
+        // Sumujemy wartości bezwzględne ujemnych transakcji
+        const spent = negativeTransactions.reduce((sum: number, t) => {
+          // Konwertujemy amount na liczbę, jeśli jest stringiem
+          const amount = typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount;
+          return sum + Math.abs(Number(amount));
+        }, 0);
+        
+        console.log(`Kategoria ${category.name} - wydatkowano: ${spent} zł`);
+          
+        // Kwota z budżetu - zawsze używamy rzeczywistej wartości z API
+        const budgetAmount = budgetItem?.allocatedAmount || 0;
+        console.log(`Kategoria ${category.name} - budżet: ${budgetAmount} zł`);
+        
+        // Rzeczywista liczba transakcji
+        const transactionCount = categoryTransactions.length;
+        
+        // Obliczanie procentowego wykorzystania budżetu
+        const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
+        
+        return {
+          ...category,
+          budget: budgetAmount,
+          spent: spent,
+          transactions: transactionCount,
+          percentage: percentage
+        };
+      });
+      
+      console.log('Dane kategorii z rzeczywistymi statystykami:', categoriesWithStats.length);
       setCategories(categoriesWithStats);
+      setActiveBudget(activeBudget);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error fetching categories data:', error);
       setIsError(true);
-      toast.error('Nie udało się pobrać kategorii. Spróbuj ponownie później.');
+      toast.error('Nie udało się pobrać danych kategorii. Spróbuj ponownie później.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
+  
+  // Pobieranie ID użytkownika przy ładowaniu strony
+  useEffect(() => {
+    // Dynamiczne importowanie, aby uniknąć problemów z SSR
+    import('@/lib/services/authService').then((authService) => {
+      const id = authService.getUserId();
+      if (id) {
+        setUserId(id);
+        console.log('Pobrano ID użytkownika z tokenu JWT:', id);
+      } else {
+        // Jeśli brak tokenu lub ID, można przekierować do strony logowania
+        console.error('Brak ID użytkownika w tokenie JWT');
+        setIsError(true);
+        toast.error('Musisz być zalogowany, aby zobaczyć swoje kategorie');
+      }
+    });
+  }, []);
+
+  // Fetch categories and budget data when userId is available
+  useEffect(() => {
+    if (!userId) return;
+    fetchCategories();
+    
+    // Ustaw interwał odświeżania danych co 30 sekund, aby zawsze mieć aktualne dane
+    const intervalId = setInterval(() => {
+      fetchCategories();
+    }, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [userId, fetchCategories]);
   
   // Format currency
   const formatCurrency = (amount: number) => {
+    if (isNaN(amount)) return '0,00 zł';
     return new Intl.NumberFormat('pl-PL', {
       style: 'currency',
       currency: 'PLN',
@@ -211,7 +347,7 @@ export default function Categories() {
   
   // Select category
   const selectCategory = (id: string) => {
-    setSelectedCategory(selectedCategory === id ? null : id);
+    setSelectedCategory(id === selectedCategory ? null : id);
   };
   
   // Edit category
@@ -251,17 +387,19 @@ export default function Categories() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Kategorie</h1>
-          <p className="text-gray-500 mt-1">Zarządzaj kategoriami wydatków i przychodów</p>
+          <p className="text-gray-500 mt-1">{activeBudget?.name || 'Budżet bieżący'}</p>
         </div>
         <div className="mt-4 md:mt-0">
-          <button 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+          <button
             onClick={() => setIsAddModalOpen(true)}
+            className="px-3 py-2 text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>Nowa kategoria</span>
+            <span className="flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Dodaj kategorię
+            </span>
           </button>
         </div>
       </div>
@@ -314,7 +452,7 @@ export default function Categories() {
               label="Szukaj kategorii"
               placeholder="Wyszukaj kategorię..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
@@ -436,15 +574,13 @@ export default function Categories() {
                     color={category.color}
                     budget={category.budget}
                     spent={category.spent}
-                    transactions={category.transactions}
-                    isSelected={selectedCategory === category.id}
+                    percentage={category.percentage || 0}
                     isDefault={category.isDefault}
                     isIncome={category.isIncome}
-                    formatCurrency={formatCurrency}
-                    calculatePercentage={calculatePercentage}
-                    onSelect={selectCategory}
-                    onDelete={handleDeleteCategory}
-                    onEdit={editCategory}
+                    transactions={category.transactions}
+                    onClick={() => selectCategory(category.id)}
+                    onDelete={() => handleDeleteCategory(category.id)}
+                    onEdit={() => editCategory(category.id)}
                   />
                 ))}
               </tbody>

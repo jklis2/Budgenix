@@ -18,10 +18,9 @@ import EmptyStateCard from '@/components/ui/EmptyStateCard';
 import NewSavingsGoalModal from '@/components/modals/NewSavingsGoalModal';
 import AddContributionModal from '@/components/modals/AddContributionModal';
 
-// Temporary user ID until auth is implemented
-const TEMP_USER_ID = 'ebbbb137-6150-409f-85d7-fd79fa505e55';
-
 export default function SavingsGoals() {
+  // Pobieramy ID użytkownika z tokenu JWT
+  const [userId, setUserId] = useState<string | null>(null);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoalWithContributions[]>([]);
   const [stats, setStats] = useState<SavingsGoalStats>({
     totalSaved: 0,
@@ -39,8 +38,27 @@ export default function SavingsGoals() {
   
   // Modalne okna są już zaimplementowane i zaimportowane
   
+  // Pobieranie ID użytkownika przy ładowaniu strony
+  useEffect(() => {
+    // Dynamiczne importowanie, aby uniknąć problemów z SSR
+    import('@/lib/services/authService').then((authService) => {
+      const id = authService.getUserId();
+      if (id) {
+        setUserId(id);
+        console.log('Pobrano ID użytkownika z tokenu JWT:', id);
+      } else {
+        // Jeśli brak tokenu lub ID, można przekierować do strony logowania
+        console.error('Brak ID użytkownika w tokenie JWT');
+        setError('Musisz być zalogowany, aby zobaczyć swoje cele oszczędnościowe');
+      }
+    });
+  }, []);
+  
   // Fetch savings goals and stats
   const fetchData = useCallback(async () => {
+    // Jeśli nie mamy jeszcze ID użytkownika, nie pobieramy danych
+    if (!userId) return;
+    
     try {
       setLoading(true);
       setError(null);
@@ -55,8 +73,8 @@ export default function SavingsGoals() {
       
       // Fetch goals and stats in parallel
       const [goalsData, statsData] = await Promise.all([
-        getSavingsGoals(TEMP_USER_ID, isCompleted),
-        getSavingsGoalStats(TEMP_USER_ID)
+        getSavingsGoals(userId, isCompleted),
+        getSavingsGoalStats(userId)
       ]);
       
       setSavingsGoals(goalsData);
@@ -67,7 +85,7 @@ export default function SavingsGoals() {
     } finally {
       setLoading(false);
     }
-  }, [filterCompleted]);
+  }, [filterCompleted, userId]);
   
   // Initial data fetch
   useEffect(() => {
@@ -78,12 +96,18 @@ export default function SavingsGoals() {
   const handleDeleteGoal = async (id: string) => {
     if (confirm('Czy na pewno chcesz usunąć ten cel oszczędnościowy?')) {
       try {
-        await deleteSavingsGoal(id, TEMP_USER_ID);
+        // Sprawdzamy czy mamy ID użytkownika
+        if (!userId) {
+          alert('Musisz być zalogowany, aby usunąć cel oszczędnościowy');
+          return;
+        }
+        
+        await deleteSavingsGoal(id, userId);
         // Refresh data after deletion
         fetchData();
       } catch (err) {
-        setError('Nie udało się usunąć celu. Spróbuj ponownie później.');
         console.error('Error deleting savings goal:', err);
+        alert('Nie udało się usunąć celu oszczędnościowego.');
       }
     }
   };
@@ -319,8 +343,8 @@ export default function SavingsGoals() {
         <NewSavingsGoalModal 
           isOpen={isNewGoalModalOpen}
           onClose={() => setIsNewGoalModalOpen(false)}
-          onSuccess={handleSuccess}
-          userId={TEMP_USER_ID}
+          onSuccess={() => fetchData()}
+          userId={userId || ''}
         />
       )}
       
@@ -331,9 +355,9 @@ export default function SavingsGoals() {
             setIsContributionModalOpen(false);
             setSelectedGoalId(null);
           }}
-          onSuccess={handleSuccess}
+          onSuccess={() => fetchData()}
           goalId={selectedGoalId}
-          userId={TEMP_USER_ID}
+          userId={userId || ''}
         />
       )}
     </div>

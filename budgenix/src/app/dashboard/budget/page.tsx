@@ -22,13 +22,30 @@ export default function Budget() {
   const [showBudgetSelector, setShowBudgetSelector] = useState(false);
   const [availableBudgets, setAvailableBudgets] = useState<BudgetWithItems[]>([]);
 
-  // Temporary user ID (in a real app, this would come from authentication)
-  // Musimy użyć identyfikatora użytkownika, który faktycznie istnieje w bazie danych
-  // W rzeczywistej aplikacji pobralibyśmy to z sesji użytkownika
-  const userId = "ebbbb137-6150-409f-85d7-fd79fa505e55"; // Prawidłowe ID użytkownika
-
-  // Fetch budget data
+  // Pobieramy ID użytkownika z tokenu JWT
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  // Pobieranie ID użytkownika przy ładowaniu strony
   useEffect(() => {
+    // Dynamiczne importowanie, aby uniknąć problemów z SSR
+    import('@/lib/services/authService').then((authService) => {
+      const id = authService.getUserId();
+      if (id) {
+        setUserId(id);
+        console.log('Pobrano ID użytkownika z tokenu JWT:', id);
+      } else {
+        // Jeśli brak tokenu lub ID, można przekierować do strony logowania
+        console.error('Brak ID użytkownika w tokenie JWT');
+        setError('Musisz być zalogowany, aby zobaczyć swoje budżety');
+      }
+    });
+  }, []);
+
+  // Fetch budget data when userId is available
+  useEffect(() => {
+    // Jeśli nie mamy jeszcze ID użytkownika, nie pobieramy danych
+    if (!userId) return;
+    
     const fetchBudgetData = async () => {
       try {
         setLoading(true);
@@ -80,10 +97,16 @@ export default function Budget() {
 
     fetchBudgetData();
   }, [userId]);
-  
+
   // Handle refresh after creating or editing budget
   const handleBudgetChange = async () => {
     try {
+      // Sprawdzamy czy mamy ID użytkownika
+      if (!userId) {
+        setError('Musisz być zalogowany, aby odświeżyć budżet');
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       
@@ -334,7 +357,7 @@ export default function Budget() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleBudgetChange}
-        userId={userId}
+        userId={userId || ''} // Przekazujemy pusty string jako wartość domyślną, ale komponent i tak nie zostanie wyrenderowany bez userId
       />
       
       <EditBudgetModal

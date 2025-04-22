@@ -13,6 +13,7 @@ export interface CategoryWithStats extends Category {
   budget?: number;
   spent?: number;
   transactions?: number;
+  percentage?: number;
 }
 
 export interface CategoryCreateInput {

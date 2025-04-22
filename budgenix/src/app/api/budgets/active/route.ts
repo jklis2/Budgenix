@@ -3,13 +3,20 @@ import prisma from "@/lib/prisma";
 
 // Funkcja do obsługi aktywnego budżetu dla danego użytkownika
 async function handleActiveBudget(userId: string) {
-  // Try to find an active budget
+  // Oblicz daty dla bieżącego miesiąca
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const startDate = new Date(currentYear, currentMonth, 1); // Pierwszy dzień bieżącego miesiąca
+  const endDate = new Date(currentYear, currentMonth + 1, 0); // Ostatni dzień bieżącego miesiąca
+
+  // Try to find a budget for the current month
   let activeBudget = await prisma.budget.findFirst({
     where: {
       userId,
-      isActive: true,
-      endDate: {
-        gte: new Date()
+      startDate: {
+        gte: startDate,
+        lt: new Date(currentYear, currentMonth + 1, 1) // Początek następnego miesiąca
       }
     },
     include: {
@@ -54,12 +61,15 @@ async function handleActiveBudget(userId: string) {
       categories.push(defaultCategory);
     }
 
-    // Calculate dates for the current month
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1); // First day of current month
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
+    // Dates for the current month are already calculated above
 
-    // Create a new budget
+    // Dezaktywuj wszystkie inne budżety tego użytkownika
+    await prisma.budget.updateMany({
+      where: { userId, isActive: true },
+      data: { isActive: false }
+    });
+
+    // Create a new budget for the current month
     const newBudget = await prisma.budget.create({
       data: {
         name: `Budżet ${startDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}`,
