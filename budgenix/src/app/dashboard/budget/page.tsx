@@ -40,7 +40,32 @@ export default function Budget() {
         
         // Fetch budget stats
         const stats = await getBudgetStats(activeBudget.id);
-        setBudgetStats(stats);
+        const categoryStats = stats.categories;
+        
+        // Obliczamy sumy dla całego budżetu
+        const totalBudget = categoryStats.reduce((sum, cat) => sum + cat.allocated, 0);
+        
+        // Transakcje są zapisywane jako wartości ujemne (wydatki)
+        const rawSpentAmount = categoryStats.reduce((sum, cat) => sum + cat.spent, 0);
+        // Zachowujemy ujemną wartość dla spójności z API, ale użyjemy Math.abs przy wyświetlaniu
+        const spentAmount = rawSpentAmount;
+        
+        // Pozostała kwota to różnica między budżetem a rzeczywistymi wydatkami (wartość bezwzględna)
+        const remainingAmount = totalBudget - Math.abs(spentAmount);
+        
+        // Procent wykorzystania budżetu
+        const spentPercentage = totalBudget > 0 ? Math.min(Math.round((Math.abs(spentAmount) / totalBudget) * 100), 100) : 0;
+        
+        setBudgetStats({
+          summary: {
+            totalBudget,
+            spentAmount,
+            remainingAmount,
+            spentPercentage,
+            currentMonth: stats.summary.currentMonth
+          },
+          categories: categoryStats
+        });
         
         // Fetch all available budgets
         const budgets = await getBudgets(userId);
@@ -227,14 +252,14 @@ export default function Budget() {
           
           <BudgetSummaryCard
             title="Pozostało"
-            value={formatCurrency(budgetStats.summary.remainingAmount)}
+            value={formatCurrency(budgetStats.summary.totalBudget - Math.abs(budgetStats.summary.spentAmount))}
             bgColor="bg-emerald-50"
             textColor="text-emerald-700"
           />
           
           <BudgetSummaryCard
             title="Wydano"
-            value={formatCurrency(budgetStats.summary.spentAmount)}
+            value={formatCurrency(Math.abs(budgetStats.summary.spentAmount))}
             bgColor="bg-amber-50"
             textColor="text-amber-700"
           />
@@ -272,7 +297,6 @@ export default function Budget() {
               name={category.name}
               spent={category.spent}
               allocated={category.allocated}
-              color={category.color}
               formatCurrency={formatCurrency}
             />
           ))}

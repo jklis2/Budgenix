@@ -31,183 +31,22 @@ export default function Categories() {
     try {
       setIsLoading(true);
       setIsError(false);
-      console.log('Rozpoczynam pobieranie danych kategorii...');
+      const data = await getCategories();
       
-      // Pobieramy kategorie
-      const categoriesData = await getCategories();
-      console.log('Pobrane kategorie:', categoriesData);
+      // Dodajemy tymczasowe dane budżetowe do kategorii
+      // W przyszłości będą one pobierane z API
+      const categoriesWithStats = data.map(category => ({
+        ...category,
+        budget: Math.floor(Math.random() * 3000) + 500,
+        spent: Math.floor(Math.random() * 2000),
+        transactions: Math.floor(Math.random() * 15) + 1
+      }));
       
-      // Używamy poprawnego ID użytkownika znalezionego w systemie
-      const userId = 'ebbbb137-6150-409f-85d7-fd79fa505e55';
-      console.log('Używamy userId:', userId);
-      
-      // Pobieramy aktywny budżet, aby uzyskać budżety kategorii
-      console.log('Pobieranie aktywnego budżetu...');
-      
-      let activebudget = null;
-      try {
-        const activeBudgetResponse = await fetch(`/api/budgets/active?userId=${userId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (activeBudgetResponse.ok) {
-          activebudget = await activeBudgetResponse.json();
-          console.log('Aktywny budżet pobrany:', activebudget);
-        } else {
-          console.warn('Nie udało się pobrać aktywnego budżetu:', activeBudgetResponse.status);
-          console.log('Brak aktywnego budżetu, używamy pustych wartości');
-        }
-      } catch (error) {
-        console.error('Błąd podczas pobierania aktywnego budżetu:', error);
-        // Kontynuujemy bez aktywnego budżetu
-      }
-      console.log('Aktywny budżet:', activebudget);
-      
-      // Pobieramy transakcje
-      let transactions = [];
-      try {
-        // Parametry filtrowania transakcji
-        const dateFrom = activebudget?.startDate ? new Date(activebudget.startDate).toISOString().split('T')[0] : undefined;
-        const dateTo = activebudget?.endDate ? new Date(activebudget.endDate).toISOString().split('T')[0] : undefined;
-        
-        // Dodajemy userId do parametrów
-        const params = new URLSearchParams();
-        if (dateFrom) params.append('dateFrom', dateFrom);
-        if (dateTo) params.append('dateTo', dateTo);
-        params.append('userId', userId);
-        
-        console.log(`Pobieranie transakcji dla okresu: ${dateFrom || 'brak'} - ${dateTo || 'brak'} i użytkownika: ${userId}`);
-        const transactionsUrl = `/api/transactions?${params.toString()}`;
-        
-        console.log('URL transakcji:', transactionsUrl);
-        // Może być potrzebny token autoryzacyjny
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token') || 'mock-auth-token';
-        
-        const transactionsResponse = await fetch(transactionsUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (transactionsResponse.ok) {
-          const transactionsData = await transactionsResponse.json();
-          console.log('Odpowiedź z API transakcji:', transactionsData);
-          transactions = transactionsData.transactions || [];
-        } else {
-          console.warn('Nie udało się pobrać transakcji:', transactionsResponse.status);
-          
-          // Alternatywne podejście - jeśli API wymaga autoryzacji, sprawdźmy czy
-          // możemy pobrać mock transakcji dla celów testowych
-          console.log('Próbujemy pobrać testowe transakcje z /api/mock/transactions');
-          try {
-            const mockResponse = await fetch(`/api/mock/transactions?userId=${userId}`, {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' }
-            });
-            
-            if (mockResponse.ok) {
-              const mockData = await mockResponse.json();
-              transactions = mockData.transactions || [];
-              console.log('Pobrano testowe transakcje:', transactions.length);
-            }
-          } catch (mockError) {
-            console.error('Nie udało się pobrać nawet testowych transakcji', mockError);
-            
-            // Tworzymy hardcoded transakcje dla celów demonstracyjnych
-            if (categoriesData && categoriesData.length > 0) {
-              console.log('Tworzymy przykładowe transakcje dla każdej kategorii');
-              for (const category of categoriesData) {
-                // Dodajemy 1-3 transakcje dla każdej kategorii z kwotą ujemną dla wydatków
-                const transactionCount = Math.floor(Math.random() * 3) + 1;
-                for (let i = 0; i < transactionCount; i++) {
-                  const amount = category.isIncome ? 
-                    Math.floor(Math.random() * 1000) + 100 : 
-                    -(Math.floor(Math.random() * 1000) + 100);
-                  
-                  transactions.push({
-                    id: `demo-transaction-${category.id}-${i}`,
-                    title: `Demo ${category.name} ${i+1}`,
-                    amount,
-                    categoryId: category.id,
-                    date: new Date().toISOString()
-                  });
-                }
-              }
-              console.log('Utworzono przykładowe transakcje:', transactions.length);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Błąd podczas pobierania transakcji:', error);
-        // Kontynuujemy bez transakcji
-      }
-      
-      console.log(`Pobrano ${transactions.length} transakcji`);
-      
-      // Tworzymy mapę z budżetami dla każdej kategorii
-      const budgetMap = new Map();
-      if (activebudget && activebudget.budgetItems) {
-        activebudget.budgetItems.forEach((item: { categoryId: string, allocatedAmount?: number }) => {
-          budgetMap.set(item.categoryId, item.allocatedAmount || 0);
-        });
-      }
-      
-      // Liczymy wydatki i liczbę transakcji dla każdej kategorii
-      const spentMap = new Map();
-      const transactionCountMap = new Map();
-      
-      console.log(`Przetwarzanie ${transactions.length} transakcji...`);
-      
-      transactions.forEach((transaction: { categoryId: string, amount: number, title?: string }) => {
-        const categoryId = transaction.categoryId;
-        console.log(`Transakcja: ${transaction.title || 'bez nazwy'}, kategoria: ${categoryId}, kwota: ${transaction.amount}`);
-        
-        if (!categoryId) {
-          console.warn('Transakcja bez przypisanej kategorii', transaction);
-          return;
-        }
-        
-        // Sumujemy wydatki - zapewniamy, że dla wydatków wartość jest dodatnia
-        // (kwoty transakcji są ujemne dla wydatków a dodatnie dla przychodów)
-        const currentSpent = spentMap.get(categoryId) || 0;
-        const amountForBudget = transaction.amount < 0 ? Math.abs(transaction.amount) : 0;
-        spentMap.set(categoryId, currentSpent + amountForBudget);
-        
-        // Liczymy transakcje
-        const currentCount = transactionCountMap.get(categoryId) || 0;
-        transactionCountMap.set(categoryId, currentCount + 1);
-      });
-      
-      console.log('Mapa wydatków po przetworzeniu:', Object.fromEntries(spentMap));
-      console.log('Mapa liczby transakcji:', Object.fromEntries(transactionCountMap));
-      
-      // Łączymy wszystkie dane
-      const categoriesWithStats = categoriesData.map(category => {
-        const budget = budgetMap.get(category.id) || 0;
-        const spent = spentMap.get(category.id) || 0;
-        const transactionCount = transactionCountMap.get(category.id) || 0;
-        
-        console.log(`Kategoria ${category.name}: budżet=${budget}, wydano=${spent}, transakcji=${transactionCount}`);
-        
-        return {
-          ...category,
-          budget,
-          spent,
-          transactions: transactionCount
-        };
-      });
-      
-      console.log('Finalne dane kategorii z statystykami:', categoriesWithStats);
       setCategories(categoriesWithStats);
     } catch (error) {
-      console.error('Error fetching categories data:', error);
+      console.error('Error fetching categories:', error);
       setIsError(true);
-      toast.error('Nie udało się pobrać danych kategorii. Spróbuj ponownie później.');
+      toast.error('Nie udało się pobrać kategorii. Spróbuj ponownie później.');
     } finally {
       setIsLoading(false);
     }
@@ -475,7 +314,7 @@ export default function Categories() {
               label="Szukaj kategorii"
               placeholder="Wyszukaj kategorię..."
               value={searchTerm}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
