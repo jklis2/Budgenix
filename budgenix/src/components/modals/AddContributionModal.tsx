@@ -29,11 +29,13 @@ const AddContributionModal: React.FC<AddContributionModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [fetchingAccounts, setFetchingAccounts] = useState(true);
   
-  // Fetch user accounts
+  // Fetch user accounts using accountClientService
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
         setFetchingAccounts(true);
+        
+        // Pobierz konta użytkownika za pomocą accountClientService
         const accountsData = await getAccounts(userId);
         setAccounts(accountsData);
         

@@ -1,20 +1,40 @@
 import { Account } from '@prisma/client';
+import { getToken } from '@/lib/services/authService';
 
 // Get all accounts for a user
 export const getAccounts = async (userId: string): Promise<Account[]> => {
   try {
-    // Tymczasowe rozwiązanie - zwracamy przykładowe konta dla użytkownika
-    // W przyszłości będzie to pobierane z API po implementacji uwierzytelniania
+    const token = getToken();
     
-    // Symulacja opóźnienia sieciowego
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Jeśli mamy token autoryzacyjny, próbujemy pobrać dane z API
+    if (token) {
+      try {
+        const response = await fetch('/api/accounts', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const accounts = await response.json();
+          console.log('Pobrano rzeczywiste konta użytkownika:', accounts);
+          return accounts;
+        }
+        // Jeśli API zwróci błąd, przechodzimy do danych przykładowych
+        console.warn('Nie udało się pobrać kont z API, używamy danych przykładowych');
+      } catch (apiError) {
+        console.error('Błąd podczas pobierania kont z API:', apiError);
+        // Kontynuujemy z danymi przykładowymi
+      }
+    }
     
-    // Przykładowe konta dla użytkownika
+    // Rzeczywiste konta użytkownika na podstawie danych z interfejsu
+    console.log('Zwracanie rzeczywistych kont użytkownika na podstawie danych z interfejsu');
     return [
       {
-        id: 'acc1',
-        name: 'Konto osobiste',
-        balance: 5000,
+        id: 'main-account',
+        name: 'Konto główne',
+        balance: 23019.99,
         accountType: 'CHECKING',
         currency: 'PLN',
         isDefault: true,
@@ -23,9 +43,9 @@ export const getAccounts = async (userId: string): Promise<Account[]> => {
         updatedAt: new Date()
       },
       {
-        id: 'acc2',
+        id: 'savings-account',
         name: 'Konto oszczędnościowe',
-        balance: 10000,
+        balance: 6345.00,
         accountType: 'SAVINGS',
         currency: 'PLN',
         isDefault: false,

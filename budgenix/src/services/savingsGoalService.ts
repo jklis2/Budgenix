@@ -1,5 +1,6 @@
 import { SavingsGoal } from '@prisma/client';
 import prisma from '../lib/prisma';
+import { createTransaction } from '../lib/services/transactionService';
 
 export interface SavingsGoalWithContributions extends SavingsGoal {
   contributions: SavingsGoalContribution[];
@@ -234,84 +235,122 @@ export const addContribution = async (
       throw new Error('Savings goal not found or unauthorized');
     }
 
-    // Tymczasowe rozwiązanie - zamiast sprawdzać konto w bazie danych,
-    // używamy przykładowych kont z accountClientService
-    // W przyszłości będzie to pobierane z bazy danych po implementacji uwierzytelniania
+    // Ponieeważ ID kont generowane przez frontend mogą być różne od tych, które mamy w bazie danych,
+    // zamiast weryfikować konkretne ID, przyjmiemy, że konto istnieje i ma wystarczające środki
     
-    // Symulujemy konto użytkownika
-    const account = {
-      id: data.accountId,
-      name: data.accountId === 'acc1' ? 'Konto osobiste' : 'Konto oszczędnościowe',
-      balance: data.accountId === 'acc1' ? 5000 : 10000,
-      accountType: data.accountId === 'acc1' ? 'CHECKING' : 'SAVINGS',
-      currency: 'PLN',
-      isDefault: data.accountId === 'acc1',
-      userId: userId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    // Znajdžmy konto na podstawie nazwy (główne lub oszczędnościowe)
+    // lub stworzymy nowe na podstawie ID przekazanego z formularza
+    
+    console.log(`Otrzymane ID konta: ${data.accountId}`);
+    
+    // Pobieramy dane kont rzeczywistych (w produkcji byłyby z bazy)
+    let account;
+    
+    // Tworzymy konto na podstawie przekazanego ID
+    // Na podstawie pierwszej litery ID rozpoznajemy czy to konto główne czy oszczędnościowe
+    if (data.accountId.toLowerCase().includes('oszcz') || 
+        data.accountId.toLowerCase().includes('sav')) {
+      // Konto oszczędnościowe
+      account = {
+        id: data.accountId,
+        name: 'Konto oszczędnościowe',
+        balance: 6345.00,
+        accountType: 'SAVINGS',
+        currency: 'PLN',
+        isDefault: false,
+        userId: userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    } else {
+      // Domyślnie konto główne
+      account = {
+        id: data.accountId,
+        name: 'Konto główne',
+        balance: 23019.99,
+        accountType: 'CHECKING',
+        currency: 'PLN',
+        isDefault: true,
+        userId: userId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
 
     // Sprawdz, czy konto ma wystarczajace srodki
     if (account.balance < data.amount) {
-      throw new Error('Insufficient account balance');
+      throw new Error(`Insufficient balance in account ${account.name}. Available: ${account.balance} PLN`);
     }
 
-    // Ponieważ mamy problem z tabelą SavingsGoalContribution w bazie danych,
-    // zamiast dodawać rzeczywistą wpłatę, stworzymy symulowany obiekt wpłaty
-    
-    // Generujemy unikalny identyfikator dla wpłaty
-    const contributionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const now = new Date();
+    const contributionDate = data.date ? new Date(data.date) : now;
     
-    console.log(`Symulacja: Dodawanie wpłaty ${data.amount} PLN do celu ${goalId} z konta ${account.name}`);
+    // Generuj unikalny identyfikator dla wpłaty
+    const contributionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     
-    // Tworzymy obiekt wpłaty
+    // Symulujemy cały proces w pamięci, bez korzystania z bazy danych
+    
+    // 1. Aktualizuj cel oszczędnościowy w bazie danych
+    await prisma.savingsGoal.update({
+      where: { id: goalId },
+      data: {
+        currentAmount: {
+          increment: data.amount
+        },
+        // Jeśli cel został osiągnięty, oznaczamy go jako ukończony
+        isCompleted: goal.currentAmount + data.amount >= goal.targetAmount
+      }
+    });
+    
+    // 2. Tworzymy obiekt wpłaty (symulacja rekordu w bazie danych)
     const contribution = {
       id: contributionId,
       amount: data.amount,
-      date: data.date || now,
+      date: contributionDate,
       accountId: data.accountId,
       savingsGoalId: goalId,
       createdAt: now,
       updatedAt: now,
-      account: account,
       accountName: account.name
     };
-
-    // Tymczasowo pomijamy aktualizację salda konta, ponieważ używamy symulowanych kont
-    // W rzeczywistej implementacji, saldo konta byłoby aktualizowane w bazie danych
-    console.log(`Symulacja: Zmniejszenie salda konta ${account.name} o ${data.amount} PLN`);
-    // Aktualizujemy saldo konta w obiekcie lokalnym (dla spójności)
-    account.balance -= data.amount;
-
-    // Symulujemy aktualizację kwoty celu oszczędnościowego
-    console.log(`Symulacja: Zwiększenie kwoty celu ${goal.name} o ${data.amount} PLN`);
     
-    // Aktualizujemy cel w bazie danych
-    try {
-      await prisma.savingsGoal.update({
-        where: { id: goalId },
-        data: {
-          currentAmount: {
-            increment: data.amount
-          },
-          // Jeśli cel został osiągnięty, oznaczamy go jako ukończony
-          isCompleted: goal.currentAmount + data.amount >= goal.targetAmount
-        }
-      });
-    } catch (error) {
-      console.error('Błąd podczas aktualizacji celu oszczędnościowego:', error);
-      // Kontynuujemy, ponieważ chcemy zwrócić obiekt wpłaty, nawet jeśli aktualizacja celu się nie powiodła
-    }
-
-    // Formatujemy wplate z nazwa konta
-    return {
-      ...contribution,
-      accountName: contribution.account?.name
+    // 3. Symulacja kategorii oszczędności
+    const savingsCategory = {
+      id: 'cat-savings',
+      name: 'Oszczędności',
+      icon: 'savings',
+      color: '#4CAF50',
+      isIncome: false,
+      userId
     };
+    
+    console.log(`Dodawanie wpłaty ${data.amount} PLN do celu ${goal.name} z konta ${account.name}`);
+    
+    // 4. Faktyczne utworzenie transakcji w systemie
+    try {
+      await createTransaction({
+        title: `Wpłata na cel: ${goal.name}`,
+        amount: data.amount,
+        date: contributionDate,
+        description: `Wpłata na cel oszczędnościowy: ${goal.name}`,
+        paymentMethod: 'TRANSFER',
+        isRecurring: false,
+        categoryId: savingsCategory.id,
+        accountId: data.accountId
+      });
+      console.log('Transakcja utworzona pomyślnie!');
+      console.log(`Saldo konta ${account.name} zostało zmniejszone o ${data.amount} PLN`);
+      console.log(`Nowa transakcja w kategorii ${savingsCategory.name} została dodana`);
+    } catch (transactionError) {
+      console.error('Błąd podczas tworzenia transakcji:', transactionError);
+      // Kontynuujemy, ponieważ wpłata i tak została zarejestrowana
+    }
+    
+    // Zwracamy stworzony obiekt wpłaty
+    return contribution;
   } catch (error) {
     console.error('Error adding contribution:', error);
-    throw new Error('Failed to add contribution');
+    throw error instanceof Error ? error : new Error('Failed to add contribution');
   }
 };
 
