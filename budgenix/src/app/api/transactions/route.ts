@@ -245,14 +245,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Aktualizacja salda konta
-    const amountChange = category.isIncome ? transaction.amount : -transaction.amount;
+    // Używamy bezpośrednio wartości transaction.amount, ponieważ wydatki już są zapisywane jako wartości ujemne w formularzu
     await prisma.account.update({
       where: {
         id: data.accountId
       },
       data: {
         balance: {
-          increment: amountChange
+          increment: transaction.amount
         }
       }
     });
