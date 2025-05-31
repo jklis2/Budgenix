@@ -11,6 +11,7 @@ export interface Subscription {
   logo: string;
   color: string;
   active: boolean;
+  accountId?: string;
 }
 
 export const subscriptions: Subscription[] = [

@@ -1,10 +1,24 @@
 import React from 'react';
-import { Subscription, formatCurrency, formatDate } from '@/constants/subscriptionsData';
+import { formatCurrency, formatDate } from '@/constants/subscriptionsData';
+
+// Lokalny interfejs Subscription, który używa string jako typ dla id
+interface Subscription {
+  id: string;
+  name: string;
+  amount: number;
+  cycle: string;
+  nextPayment: string;
+  category: string;
+  logo: string;
+  color: string;
+  active: boolean;
+  accountId?: string;
+}
 
 interface SubscriptionListItemProps {
   subscription: Subscription;
-  onToggleStatus: (id: number) => void;
-  onDelete: (id: number) => void;
+  onToggleStatus: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 const SubscriptionListItem: React.FC<SubscriptionListItemProps> = ({
