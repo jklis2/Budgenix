@@ -58,7 +58,30 @@ export default function Subscriptions() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [processingPayments, setProcessingPayments] = useState(false);
+  const [paymentResults, setPaymentResults] = useState<{
+    processed: number;
+    total: number;
+    payments?: Array<{
+      subscriptionId: string;
+      name: string;
+      amount: number;
+      accountName: string;
+      newBalance: number;
+      nextBillingDate: string;
+      transactionId: string;
+    }>;
+    errors?: Array<{
+      subscriptionId: string;
+      name: string;
+      error: string;
+      account?: string;
+      required?: number;
+      available?: number;
+    }>;
+  } | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
+
   // Fetch subscriptions from API
   useEffect(() => {
     const fetchSubscriptions = async () => {
@@ -110,6 +133,95 @@ export default function Subscriptions() {
 
     fetchSubscriptions();
   }, []);
+
+  // Process subscription payments
+  const processSubscriptionPayments = async () => {
+    setProcessingPayments(true);
+    setPaymentResults(null);
+    
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Nie jesteś zalogowany');
+      }
+      
+      const response = await fetch('/api/subscriptions/process-payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Błąd podczas przetwarzania płatności');
+      }
+      
+      const results = await response.json();
+      setPaymentResults(results);
+      
+      // Odśwież listę subskrypcji po przetworzeniu płatności
+      const fetchSubscriptions = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          // Get token from localStorage
+          const token = localStorage.getItem('token');
+          if (!token) {
+            setError('Nie jesteś zalogowany. Zaloguj się, aby zobaczyć swoje subskrypcje.');
+            setIsLoading(false);
+            return;
+          }
+
+          const response = await fetch('/api/subscriptions', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          // Transform the API response to match our frontend Subscription model
+          const transformedData: Subscription[] = data.map((sub: ApiSubscription) => ({
+            id: sub.id,
+            name: sub.name,
+            amount: sub.amount,
+            cycle: sub.billingCycle,
+            nextPayment: new Date(sub.nextBillingDate).toISOString().split('T')[0],
+            category: sub.category?.name || 'Inne',
+            logo: sub.category?.icon || '🔔',
+            color: sub.category?.color || 'blue',
+            active: true, // Since we don't have this in the database yet
+            accountId: sub.accountId || undefined
+          }));
+          
+          setSubscriptions(transformedData);
+        } catch (err) {
+          console.error('Error fetching subscriptions:', err);
+          setError('Nie udało się pobrać subskrypcji. Spróbuj ponownie później.');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      await fetchSubscriptions();
+      
+      // Pokaż powiadomienie o sukcesie
+      alert(`Przetworzono ${results.processed} z ${results.total} płatności subskrypcji.`);
+    } catch (err: unknown) {
+      console.error('Error processing subscription payments:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Nieznany błąd';
+      alert(`Błąd podczas przetwarzania płatności: ${errorMessage}`);
+    } finally {
+      setProcessingPayments(false);
+    }
+  };
 
   // Get all unique categories
   const categories = ['all', ...new Set(subscriptions.map(s => s.category))];
@@ -337,20 +449,37 @@ export default function Subscriptions() {
   return (
     <div className="space-y-8">
       {/* Page header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Subskrypcje</h1>
-          <p className="text-gray-500 mt-1">Zarządzaj swoimi cyklicznymi płatnościami</p>
-        </div>
-        <div className="mt-4 md:mt-0">
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Subskrypcje</h1>
+        <div className="flex space-x-4">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1 rounded ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+            >
+              Lista
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-1 rounded ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+            >
+              Tabela
+            </button>
+          </div>
+          <button
+            onClick={processSubscriptionPayments}
+            disabled={processingPayments}
+            className={`${processingPayments ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded transition-colors mr-2`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>Nowa subskrypcja</span>
+            {processingPayments ? 'Przetwarzanie...' : 'Sprawdź płatności'}
+          </button>
+          <button
+            onClick={() => {
+              setIsModalOpen(true);
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors"
+          >
+            Dodaj subskrypcję
           </button>
         </div>
       </div>
@@ -396,6 +525,46 @@ export default function Subscriptions() {
           )}
         </div>
       </div>
+      
+      {/* Payment Results */}
+      {paymentResults && (
+        <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4">Wyniki przetwarzania płatności</h2>
+          <div className="space-y-2">
+            <p>Przetworzono: {paymentResults.processed} z {paymentResults.total} płatności</p>
+            
+            {paymentResults.payments && paymentResults.payments.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-medium mb-2">Zrealizowane płatności:</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  {paymentResults.payments.map((payment, index) => (
+                    <li key={index}>
+                      {payment.name}: {payment.amount} PLN z konta {payment.accountName}. 
+                      Nowe saldo: {payment.newBalance} PLN. 
+                      Następna płatność: {new Date(payment.nextBillingDate).toLocaleDateString()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {paymentResults.errors && paymentResults.errors.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-medium mb-2 text-red-600">Błędy:</h3>
+                <ul className="list-disc pl-5 space-y-1 text-red-600">
+                  {paymentResults.errors.map((error, index) => (
+                    <li key={index}>
+                      {error.name}: {error.error}
+                      {error.account && ` (Konto: ${error.account})`}
+                      {error.required && error.available && ` (Wymagane: ${error.required} PLN, Dostępne: ${error.available} PLN)`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       
       {/* Filters and search */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">

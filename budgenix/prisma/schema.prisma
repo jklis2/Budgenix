@@ -43,6 +43,7 @@ model Account {
   user         User                     @relation(fields: [userId], references: [id], onUpdate: NoAction)
   transactions Transaction[]
   contributions SavingsGoalContribution[]
+  subscriptions Subscription[]
 }
 
 model Category {
@@ -129,10 +130,12 @@ model Subscription {
   startDate       DateTime
   nextBillingDate DateTime
   categoryId      String?
+  accountId       String?
   userId          String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   category        Category? @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  account         Account?  @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user            User      @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }
 
