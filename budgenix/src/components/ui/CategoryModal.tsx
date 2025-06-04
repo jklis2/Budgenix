@@ -26,7 +26,7 @@ export function CategoryModal({
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         {/* Tło */}
         <div 
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          className="fixed inset-0 transition-opacity bg-gray-900/50 backdrop-blur-sm"
           aria-hidden="true"
           onClick={onClose}
         ></div>

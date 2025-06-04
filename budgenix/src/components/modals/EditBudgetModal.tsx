@@ -88,10 +88,10 @@ export function EditBudgetModal({ isOpen, onClose, onSuccess, budget }: EditBudg
   if (!isOpen || !budget) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Edytuj bud\u017cet</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Edytuj budżet</h2>
           <button 
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -110,7 +110,7 @@ export function EditBudgetModal({ isOpen, onClose, onSuccess, budget }: EditBudg
 
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nazwa bud\u017cetu</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nazwa budżetu</label>
             <input
               type="text"
               id="name"
@@ -122,7 +122,7 @@ export function EditBudgetModal({ isOpen, onClose, onSuccess, budget }: EditBudg
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-3">Kwoty bud\u017cetowe dla kategorii</h3>
+            <h3 className="text-lg font-medium text-gray-800 mb-3">Kwoty budżetowe dla kategorii</h3>
             
             <div className="space-y-4">
               {budgetItems.map((item, index) => (
