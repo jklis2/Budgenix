@@ -31,19 +31,17 @@ model User {
 }
 
 model Account {
-  id           String                   @id @default(uuid())
+  id           String        @id @default(uuid())
   name         String
   balance      Float
   accountType  String
-  currency     String                   @default("PLN")
-  isDefault    Boolean                  @default(false)
+  currency     String        @default("PLN")
+  isDefault    Boolean       @default(false)
   userId       String
-  createdAt    DateTime                 @default(now())
-  updatedAt    DateTime                 @updatedAt
-  user         User                     @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onUpdate: NoAction)
   transactions Transaction[]
-  contributions SavingsGoalContribution[]
-  subscriptions Subscription[]
 }
 
 model Category {
@@ -106,20 +104,19 @@ model BudgetItem {
 }
 
 model SavingsGoal {
-  id            String                   @id @default(uuid())
+  id            String   @id @default(uuid())
   name          String
   targetAmount  Float
-  currentAmount Float                    @default(0)
+  currentAmount Float    @default(0)
   startDate     DateTime
   targetDate    DateTime
-  isCompleted   Boolean                  @default(false)
+  isCompleted   Boolean  @default(false)
   icon          String?
   color         String?
   userId        String
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  user          User                     @relation(fields: [userId], references: [id], onUpdate: NoAction)
-  contributions SavingsGoalContribution[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }
 
 model Subscription {
@@ -130,23 +127,19 @@ model Subscription {
   startDate       DateTime
   nextBillingDate DateTime
   categoryId      String?
-  accountId       String?
   userId          String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   category        Category? @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  account         Account?  @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user            User      @relation(fields: [userId], references: [id], onUpdate: NoAction)
 }
 
-model SavingsGoalContribution {
-  id            String      @id @default(uuid())
-  amount        Float
-  date          DateTime
-  accountId     String
-  savingsGoalId String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  account       Account     @relation(fields: [accountId], references: [id], onUpdate: NoAction)
-  savingsGoal   SavingsGoal @relation(fields: [savingsGoalId], references: [id], onUpdate: NoAction)
+model sysdiagrams {
+  name         String @db.NVarChar(128)
+  principal_id Int
+  diagram_id   Int    @id(map: "PK__sysdiagr__C2B05B61F13BBC33") @default(autoincrement())
+  version      Int?
+  definition   Bytes?
+
+  @@unique([principal_id, name], map: "UK_principal_name")
 }
