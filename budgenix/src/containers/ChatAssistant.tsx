@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 type Message = {
   id: string;
@@ -43,26 +44,46 @@ export default function ChatAssistant() {
     setInputValue("");
     setIsLoading(true);
 
-    // Simulate AI response (in a real app, this would be an API call)
-    setTimeout(() => {
-      const aiResponses = [
-        "Dziękuję za pytanie. W Budgenix oferujemy różne narzędzia do zarządzania budżetem osobistym, w tym śledzenie wydatków, planowanie budżetu i analizę finansową.",
-        "Aby utworzyć nowy budżet, przejdź do zakładki 'Budżety' i kliknij przycisk 'Utwórz nowy budżet'. Następnie możesz dostosować kategorie i limity wydatków.",
-        "Analizy finansowe są dostępne w sekcji 'Raporty'. Tam znajdziesz wykresy i statystyki dotyczące Twoich wydatków i oszczędności.",
-        "Możesz dodać nowe konto w sekcji 'Konta'. Obsługujemy różne typy kont, w tym konta bankowe, gotówkowe i karty kredytowe.",
-        "Funkcja automatycznego kategoryzowania wydatków pomaga w organizacji Twoich finansów. System uczy się Twoich wzorców wydatków i przypisuje kategorie automatycznie."
-      ];
+    try {
+      // Call the AI assistant API with Gemini
+      const response = await fetch("/api/ai-assistant", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: inputValue }),
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get response from AI assistant");
+      }
+
+      // Add AI response to messages
       const aiMessage: Message = {
         id: Date.now().toString(),
-        content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+        content: data.response,
         sender: "assistant",
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: "Przepraszam, wystąpił problem z połączeniem. Spróbuj ponownie później.",
+        sender: "assistant",
+        timestamp: new Date(),
+      };
+      
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   // Format timestamp
@@ -104,7 +125,13 @@ export default function ChatAssistant() {
                 ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
                 : "bg-white border border-gray-100 text-gray-800"}`}
             >
-              <div className="text-sm">{message.content}</div>
+              {message.sender === "assistant" ? (
+                <div className="text-sm markdown-content">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
+              ) : (
+                <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+              )}
               <div className={`text-xs mt-1 flex items-center ${message.sender === "user" ? "text-green-100" : "text-gray-500"}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

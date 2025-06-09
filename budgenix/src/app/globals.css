@@ -1,1 +1,58 @@
 @import "tailwindcss";
+
+/* Style dla komponentu Markdown */
+.markdown-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {
+  font-weight: bold;
+  margin: 0.75rem 0 0.5rem 0;
+}
+
+.markdown-content h1 { font-size: 1.5rem; }
+.markdown-content h2 { font-size: 1.3rem; }
+.markdown-content h3 { font-size: 1.2rem; }
+.markdown-content h4 { font-size: 1.1rem; }
+
+.markdown-content p {
+  margin: 0.5rem 0;
+}
+
+.markdown-content strong {
+  font-weight: bold;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content code {
+  background-color: #f0f0f0;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.markdown-content pre {
+  background-color: #f0f0f0;
+  padding: 0.5rem;
+  border-radius: 5px;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid #ccc;
+  padding-left: 0.5rem;
+  margin: 0.5rem 0;
+  color: #555;
+}
