@@ -11,7 +11,8 @@ interface Subscription {
   cycle: string;
   nextPayment: string;
   category: string;
-  logo: string;
+  logo: string; // Zachowujemy dla kompatybilności wstecznej
+  icon?: string; // Nowe pole dla ikony
   color: string;
   active: boolean;
   accountId?: string;
@@ -35,6 +36,11 @@ const iconOptions = [
   { name: 'Office', value: '💼' },
   { name: 'Gry', value: '🎮' },
   { name: 'Książki', value: '📚' },
+  { name: 'Streaming', value: '🍿' },
+  { name: 'Zdrowie', value: '❤️' },
+  { name: 'Transport', value: '🚗' },
+  { name: 'Edukacja', value: '🎓' },
+  { name: 'Jedzenie', value: '🍔' },
   { name: 'Inne', value: '📱' }
 ];
 
@@ -51,7 +57,8 @@ export function SubscriptionForm({ subscription, onSubmit, onCancel, isSubmittin
     name: '',
     amount: 0,
     cycle: 'monthly',
-    logo: '📱',
+    logo: '📱', // Zachowujemy dla kompatybilności wstecznej
+    icon: '📱', // Nowe pole dla ikony
     color: 'blue',
     category: '',
     accountId: '',
@@ -70,6 +77,7 @@ export function SubscriptionForm({ subscription, onSubmit, onCancel, isSubmittin
         amount: subscription.amount,
         cycle: subscription.cycle,
         logo: subscription.logo,
+        icon: subscription.icon || subscription.logo, // Używamy icon jeśli istnieje, w przeciwnym razie logo
         color: subscription.color,
         category: subscription.category,
         accountId: subscription.accountId || '',
@@ -129,9 +137,10 @@ export function SubscriptionForm({ subscription, onSubmit, onCancel, isSubmittin
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Używamy daty wybranej przez użytkownika
+    // Używamy daty wybranej przez użytkownika i synchronizujemy logo z icon dla kompatybilności
     const subscriptionData = {
-      ...formData
+      ...formData,
+      logo: formData.icon // Synchronizujemy logo z icon dla kompatybilności wstecznej
     };
     
     onSubmit(subscriptionData);
@@ -148,13 +157,13 @@ export function SubscriptionForm({ subscription, onSubmit, onCancel, isSubmittin
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="icon" className="block text-sm font-medium text-gray-700 mb-1">
           Ikona
         </label>
         <select
-          id="logo"
-          name="logo"
-          value={formData.logo}
+          id="icon"
+          name="icon"
+          value={formData.icon}
           onChange={handleChange}
           required
           className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"

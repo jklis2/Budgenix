@@ -10,6 +10,7 @@ interface Subscription {
   nextPayment: string;
   category: string;
   logo: string;
+  icon?: string; // Nowe pole dla ikony
   color: string;
   active: boolean;
   accountId?: string;
@@ -31,7 +32,7 @@ const SubscriptionListItem: React.FC<SubscriptionListItemProps> = ({
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <div className={`w-8 h-8 rounded-full bg-${subscription.color}-100 flex items-center justify-center mr-3`}>
-            <span className="text-lg">{subscription.logo}</span>
+            <span className="text-lg">{subscription.icon || subscription.logo}</span>
           </div>
           <div>
             <div className="font-medium text-gray-800">{subscription.name}</div>

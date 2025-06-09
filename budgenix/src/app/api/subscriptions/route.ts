@@ -3,6 +3,38 @@ import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
+// Interfejs dla API response
+interface ApiSubscription {
+  id: string;
+  name: string;
+  amount: number;
+  billingCycle: string;
+  startDate: Date;
+  nextBillingDate: Date;
+  categoryId: string | null;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  icon?: string | null;
+  category?: {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+    isIncome: boolean;
+    isDefault: boolean;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+  // Pola UI
+  logo?: string;
+  color?: string;
+  cycle?: string;
+  nextPayment?: string;
+  active?: boolean;
+}
+
 // Helper function to verify JWT token and get user ID
 const getUserIdFromToken = (request: NextRequest) => {
   const authHeader = request.headers.get("authorization");
@@ -64,7 +96,26 @@ export async function GET(request: NextRequest) {
       ]
     });
 
-    return NextResponse.json(subscriptions);
+    // Map subscriptions to include UI-specific fields
+    const subscriptionsWithUIFields = subscriptions.map(subscription => {
+      // Konwersja subscription na typ any, aby uniknąć błędów TypeScript
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const subscriptionAny = subscription as any;
+      
+      const uiSubscription: ApiSubscription = {
+        ...subscription,
+        logo: subscription.category?.icon || "🔔",
+        icon: subscriptionAny.icon || subscription.category?.icon || "🔔", // Używamy icon z subskrypcji, jeśli istnieje
+        color: subscription.category?.color || "blue",
+        cycle: subscription.billingCycle,
+        nextPayment: subscription.nextBillingDate.toISOString(),
+        category: subscription.category,
+        active: true // Domyślnie aktywna
+      };
+      return uiSubscription;
+    });
+
+    return NextResponse.json(subscriptionsWithUIFields);
   } catch (error) {
     console.error("Error fetching subscriptions:", error);
     return NextResponse.json(
@@ -108,7 +159,7 @@ export async function POST(request: NextRequest) {
     console.log("User found:", user.id);
 
     const data = await request.json();
-    const { name, amount, cycle, nextPayment, category, logo, color, active, accountId } = data;
+    const { name, amount, cycle, nextPayment, category, logo, icon, color, active, accountId } = data;
     console.log("Subscription data:", data);
 
     // Validation
@@ -143,20 +194,26 @@ export async function POST(request: NextRequest) {
         billingCycle: cycle,
         startDate: new Date(),
         nextBillingDate: new Date(nextPayment),
+        icon: icon || logo || "🔔", // Zapisujemy ikonę do bazy danych
         categoryId,
         userId: user.id
       });
       
+      // Przygotowanie danych do utworzenia subskrypcji
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const subscriptionData: any = {
+        name,
+        amount: parseFloat(amount.toString()),
+        billingCycle: cycle,
+        startDate: new Date(),
+        nextBillingDate: new Date(nextPayment),
+        icon: icon || logo || "🔔", // Zapisujemy ikonę do bazy danych
+        categoryId,
+        userId: user.id
+      };
+      
       const newSubscription = await prisma.subscription.create({
-        data: {
-          name,
-          amount: parseFloat(amount.toString()),
-          billingCycle: cycle,
-          startDate: new Date(),
-          nextBillingDate: new Date(nextPayment),
-          categoryId,
-          userId: user.id
-        },
+        data: subscriptionData,
         include: {
           category: true
         }
@@ -171,6 +228,7 @@ export async function POST(request: NextRequest) {
       const responseData = {
         ...newSubscription,
         logo: logo || "🔔",
+        icon: icon || logo || "🔔", // Używamy icon jeśli istnieje, w przeciwnym razie logo
         color: color || "blue",
         active: active !== undefined ? active : true,
         accountId: accountId || null

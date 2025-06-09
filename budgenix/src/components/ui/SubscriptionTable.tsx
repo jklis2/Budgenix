@@ -10,6 +10,7 @@ interface Subscription {
   nextPayment: string;
   category: string;
   logo: string;
+  icon?: string; // Nowe pole dla ikony
   color: string;
   active: boolean;
   accountId?: string;

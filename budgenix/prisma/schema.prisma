@@ -126,6 +126,7 @@ model Subscription {
   billingCycle    String
   startDate       DateTime
   nextBillingDate DateTime
+  icon            String?
   categoryId      String?
   userId          String
   createdAt       DateTime  @default(now())

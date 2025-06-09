@@ -15,6 +15,7 @@ interface Subscription {
   nextPayment: string;
   category: string;
   logo: string;
+  icon?: string; // Nowe pole dla ikony
   color: string;
   active: boolean;
   accountId?: string;
@@ -32,6 +33,7 @@ interface ApiSubscription {
   createdAt: string;
   updatedAt: string;
   accountId?: string;
+  icon?: string;
   category?: {
     id: string;
     name: string;
@@ -116,7 +118,7 @@ export default function Subscriptions() {
           cycle: sub.billingCycle,
           nextPayment: new Date(sub.nextBillingDate).toISOString().split('T')[0],
           category: sub.category?.name || 'Inne',
-          logo: sub.category?.icon || '🔔',
+          logo: sub.icon || sub.category?.icon || '🔔', // Użyj ikony z subskrypcji, jeśli jest dostępna
           color: sub.category?.color || 'blue',
           active: true, // Since we don't have this in the database yet
           accountId: sub.accountId || undefined
@@ -195,7 +197,7 @@ export default function Subscriptions() {
             cycle: sub.billingCycle,
             nextPayment: new Date(sub.nextBillingDate).toISOString().split('T')[0],
             category: sub.category?.name || 'Inne',
-            logo: sub.category?.icon || '🔔',
+            logo: sub.icon || sub.category?.icon || '🔔', // Użyj ikony z subskrypcji, jeśli jest dostępna
             color: sub.category?.color || 'blue',
             active: true, // Since we don't have this in the database yet
             accountId: sub.accountId || undefined
