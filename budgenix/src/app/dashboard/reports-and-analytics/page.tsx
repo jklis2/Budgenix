@@ -1,18 +1,7 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  monthlyExpenses,
-  monthlyIncome,
-  monthlySavings,
-  categorySpending,
-  budgetVsActual,
-  financialInsights,
-  formatCurrency,
-  calculateTotalExpenses,
-  calculateTotalIncome,
-  calculateTotalSavings,
-  calculateSavingsRate,
-  calculateMaxChartValue
+  financialInsights
 } from '@/constants/reportsData';
 import ReportSummaryCard from '@/components/ui/ReportSummaryCard';
 import FinancialTrendsChart from '@/components/ui/FinancialTrendsChart';
@@ -21,35 +10,153 @@ import BudgetComparisonTable from '@/components/ui/BudgetComparisonTable';
 import InsightCard from '@/components/ui/InsightCard';
 import ExportButton from '@/components/ui/ExportButton';
 import { TipCard } from '@/components/ui/TipCard';
+import { 
+  getReportStats, 
+  getPeriodDates, 
+  groupByQuarter, 
+  groupByYear,
+  formatCurrency,
+  getPeriodLabel,
+  getBudgetComparison,
+  PeriodData,
+  CategoryStat,
+  BudgetComparison
+} from '@/services/reportsService';
+
+interface ChartData extends PeriodData {
+  month: string;
+  amount: number;
+}
 
 export default function ReportsAndAnalytics() {
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedPeriod, setSelectedPeriod] = useState<'month' | 'quarter' | 'year'>('month');
   const [selectedChart, setSelectedChart] = useState('expenses');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Calculate financial metrics
-  const totalExpenses = calculateTotalExpenses();
-  const totalIncome = calculateTotalIncome();
-  const totalSavings = calculateTotalSavings();
-  const savingsRate = calculateSavingsRate();
+  // Stan dla rzeczywistych danych
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [totalSavings, setTotalSavings] = useState(0);
+  const [savingsRate, setSavingsRate] = useState(0);
+  const [chartDataExpenses, setChartDataExpenses] = useState<ChartData[]>([]);
+  const [chartDataIncome, setChartDataIncome] = useState<ChartData[]>([]);
+  const [chartDataSavings, setChartDataSavings] = useState<ChartData[]>([]);
+  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
+  const [budgetComparisons, setBudgetComparisons] = useState<BudgetComparison[]>([]);
+
+  // Pobieranie danych z API
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const dates = getPeriodDates(selectedPeriod);
+        const stats = await getReportStats({
+          startDate: dates.startDate,
+          endDate: dates.endDate,
+          period: 'month' // Zawsze pobieramy dane miesięczne, a później grupujemy
+        });
+
+        // Ustawienie sum
+        setTotalIncome(stats.totalIncome);
+        setTotalExpenses(stats.totalExpense);
+        setTotalSavings(stats.totalSavings);
+        setSavingsRate(stats.savingsRate);
+
+        // Grupowanie danych w zależności od wybranego okresu
+        let processedData: PeriodData[] = stats.timeStats;
+        
+        if (selectedPeriod === 'quarter') {
+          processedData = groupByQuarter(stats.timeStats);
+        } else if (selectedPeriod === 'year') {
+          processedData = groupByYear(stats.timeStats);
+        }
+
+        // Konwersja do formatu wymaganego przez wykresy
+        const expensesData = processedData.map(item => ({
+          ...item,
+          month: item.period,
+          amount: item.expense
+        }));
+
+        const incomeData = processedData.map(item => ({
+          ...item,
+          month: item.period,
+          amount: item.income
+        }));
+
+        const savingsData = processedData.map(item => ({
+          ...item,
+          month: item.period,
+          amount: item.savings
+        }));
+
+        setChartDataExpenses(expensesData);
+        setChartDataIncome(incomeData);
+        setChartDataSavings(savingsData);
+
+        // Ustawienie statystyk kategorii
+        if (stats.categoryStats) {
+          console.log('Category Stats:', stats.categoryStats);
+          setCategoryStats(stats.categoryStats);
+        }
+
+        // Pobieranie porównania budżetu
+        const budgetData = await getBudgetComparison({
+          startDate: dates.startDate,
+          endDate: dates.endDate,
+          period: selectedPeriod
+        });
+        console.log('Budget Comparisons:', budgetData);
+        setBudgetComparisons(budgetData);
+
+      } catch (err) {
+        console.error('Błąd pobierania danych:', err);
+        setError(err instanceof Error ? err.message : 'Wystąpił błąd podczas pobierania danych');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedPeriod]);
   
   // Get chart data based on selection
   const getChartData = () => {
     switch (selectedChart) {
       case 'expenses':
-        return monthlyExpenses;
+        return chartDataExpenses;
       case 'income':
-        return monthlyIncome;
+        return chartDataIncome;
       case 'savings':
-        return monthlySavings;
+        return chartDataSavings;
       default:
-        return monthlyExpenses;
+        return chartDataExpenses;
     }
   };
   
-  // Calculate max value for chart
+  // Calculate max value for chart (use absolute values for negative amounts)
   const chartData = getChartData();
-  const maxChartValue = calculateMaxChartValue(chartData);
+  const maxChartValue = chartData.length > 0 
+    ? Math.max(...chartData.map(item => Math.abs(item.amount)), 1) 
+    : 1000;
+  
+  // Pobierz nazwę okresu
+  const periodLabel = getPeriodLabel(selectedPeriod);
+  
+  // Wyświetl komunikat o błędzie jeśli wystąpił
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">Błąd: {error}</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-8">
@@ -94,54 +201,118 @@ export default function ReportsAndAnalytics() {
       </div>
       
       {/* Financial summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ReportSummaryCard
-          title="Miesięczne wydatki"
-          amount={totalExpenses}
-          formattedAmount={formatCurrency(totalExpenses)}
-          iconType="expense"
-        />
-        
-        <ReportSummaryCard
-          title="Miesięczne przychody"
-          amount={totalIncome}
-          formattedAmount={formatCurrency(totalIncome)}
-          iconType="income"
-        />
-        
-        <ReportSummaryCard
-          title="Miesięczne oszczędności"
-          amount={totalSavings}
-          formattedAmount={formatCurrency(totalSavings)}
-          iconType="savings"
-          additionalInfo={`${savingsRate}% przychodu`}
-        />
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ReportSummaryCard
+            title={`${periodLabel} wydatki`}
+            amount={totalExpenses}
+            formattedAmount={formatCurrency(totalExpenses)}
+            iconType="expense"
+          />
+          
+          <ReportSummaryCard
+            title={`${periodLabel} przychody`}
+            amount={totalIncome}
+            formattedAmount={formatCurrency(totalIncome)}
+            iconType="income"
+          />
+          
+          <ReportSummaryCard
+            title={`${periodLabel} oszczędności`}
+            amount={totalSavings}
+            formattedAmount={formatCurrency(totalSavings)}
+            iconType="savings"
+            additionalInfo={`${savingsRate}% przychodu`}
+          />
+        </div>
+      )}
       
       {/* Chart section */}
-      <FinancialTrendsChart
-        chartData={chartData}
-        maxValue={maxChartValue}
-        selectedChart={selectedChart}
-        onChartChange={setSelectedChart}
-      />
+      {isLoading ? (
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 animate-pulse">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+            <div className="flex space-x-2">
+              <div className="h-8 bg-gray-200 rounded w-20"></div>
+              <div className="h-8 bg-gray-200 rounded w-24"></div>
+              <div className="h-8 bg-gray-200 rounded w-28"></div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="text-center">
+                <div className="h-3 bg-gray-200 rounded w-16 mx-auto mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-24 mx-auto"></div>
+              </div>
+            ))}
+          </div>
+          <div className="h-80 bg-gray-100 rounded"></div>
+        </div>
+      ) : (
+        <FinancialTrendsChart
+          chartData={chartData}
+          maxValue={maxChartValue}
+          selectedChart={selectedChart}
+          onChartChange={setSelectedChart}
+        />
+      )}
       
       {/* Category spending */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CategorySpendingCard
-          categories={categorySpending}
-          totalExpenses={totalExpenses}
-          formattedTotalExpenses={formatCurrency(totalExpenses)}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
-        
-        <BudgetComparisonTable
-          budgetItems={budgetVsActual}
-          formattedTotalBudgeted={formatCurrency(budgetVsActual.reduce((sum, item) => sum + item.budgeted, 0))}
-          formattedTotalActual={formatCurrency(budgetVsActual.reduce((sum, item) => sum + item.actual, 0))}
-          formattedTotalVariance={formatCurrency(budgetVsActual.reduce((sum, item) => sum + item.variance, 0))}
-        />
+        {isLoading ? (
+          <>
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i}>
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-2 bg-gray-200 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="space-y-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-8 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <CategorySpendingCard
+              categories={categoryStats.length > 0 ? categoryStats.map(cat => ({
+                category: cat.name,
+                amount: cat.amount,
+                percentage: cat.percentage,
+                color: cat.color || 'indigo'
+              })) : []}
+              totalExpenses={totalExpenses}
+              formattedTotalExpenses={formatCurrency(totalExpenses)}
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
+            
+            <BudgetComparisonTable
+              budgetItems={budgetComparisons}
+              formattedTotalBudgeted={formatCurrency(budgetComparisons.reduce((sum, item) => sum + item.budgeted, 0))}
+              formattedTotalActual={formatCurrency(budgetComparisons.reduce((sum, item) => sum + item.actual, 0))}
+              formattedTotalVariance={formatCurrency(budgetComparisons.reduce((sum, item) => sum + item.variance, 0))}
+            />
+          </>
+        )}
       </div>
       
       {/* Financial insights */}
