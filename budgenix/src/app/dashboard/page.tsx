@@ -1,9 +1,20 @@
 "use client";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FinancialSummaryCard } from '@/components/ui/FinancialSummaryCard';
 import { QuickActionCard } from '@/components/ui/QuickActionCard';
-import { financialSummaryData, quickActionsData, recentTransactions } from '@/constants/dashboardData';
+import { quickActionsData } from '@/constants/dashboardData';
+import { getTransactions, getTransactionStats, getAccounts, Transaction, TransactionStats, Account } from '@/lib/services/transactionService';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 export default function Dashboard() {
+  const router = useRouter();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [stats, setStats] = useState<TransactionStats | null>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pl-PL', {
@@ -11,6 +22,157 @@ export default function Dashboard() {
       currency: 'PLN',
       minimumFractionDigits: 2
     }).format(amount);
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get current month dates
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        // Fetch data in parallel
+        const [transactionsData, statsData, accountsData] = await Promise.all([
+          getTransactions({ 
+            limit: 5, 
+            sortBy: 'date', 
+            sortOrder: 'desc' 
+          }),
+          getTransactionStats({
+            dateFrom: firstDay.toISOString().split('T')[0],
+            dateTo: lastDay.toISOString().split('T')[0]
+          }),
+          getAccounts()
+        ]);
+
+        setTransactions(transactionsData.transactions || []);
+        setStats(statsData);
+        setAccounts(accountsData);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Nie udało się pobrać danych');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Calculate financial summary data
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const monthlyIncome = stats?.totalIncome || 0;
+  const monthlyExpense = stats?.totalExpense || 0;
+  const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpense) / monthlyIncome * 100) : 0;
+
+  const financialSummaryData = [
+    {
+      id: 1,
+      title: 'Saldo konta',
+      value: totalBalance,
+      iconColor: 'text-emerald-600',
+      trendIcon: 'up',
+      trendText: 'Suma wszystkich kont',
+      trendColor: 'text-emerald-600'
+    },
+    {
+      id: 2,
+      title: 'Miesięczny przychód',
+      value: monthlyIncome,
+      iconColor: 'text-blue-600',
+      trendIcon: 'up',
+      trendText: stats?.incomeChange ? `${stats.incomeChange > 0 ? '+' : ''}${stats.incomeChange.toFixed(1)}% od ostatniego miesiąca` : 'Bieżący miesiąc',
+      trendColor: 'text-blue-600'
+    },
+    {
+      id: 3,
+      title: 'Miesięczne wydatki',
+      value: monthlyExpense,
+      iconColor: 'text-red-600',
+      trendIcon: 'down',
+      trendText: stats?.expenseChange ? `${stats.expenseChange > 0 ? '+' : ''}${stats.expenseChange.toFixed(1)}% od ostatniego miesiąca` : 'Bieżący miesiąc',
+      trendColor: 'text-red-600'
+    },
+    {
+      id: 4,
+      title: 'Wskaźnik oszczędności',
+      value: savingsRate,
+      isPercentage: true,
+      iconColor: 'text-purple-600',
+      trendIcon: savingsRate > 20 ? 'up' : 'down',
+      trendText: savingsRate > 20 ? 'Dobry poziom oszczędności' : 'Zwiększ oszczędności',
+      trendColor: savingsRate > 20 ? 'text-purple-600' : 'text-orange-600'
+    }
+  ];
+
+  // Prepare chart data with category colors
+  // Używamy wartości bezwzględnych i bierzemy tylko kategorie z realnymi wydatkami (> 0)
+  const rawTopExpenses = stats?.topExpenseCategories || [];
+  const topExpenses = rawTopExpenses
+    .map((cat) => ({
+      ...cat,
+      amount: Math.abs(cat.amount ?? 0),
+    }))
+    .filter((cat) => cat.amount > 0);
+
+  const totalExpenses = topExpenses.reduce((sum, cat) => sum + cat.amount, 0);
+  
+  // Distinct colors for each category - GWARANTOWANE różne kolory
+  const CHART_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316'];
+  
+  const categoryChartData = topExpenses.map((cat) => ({
+    name: cat.name,
+    value: cat.amount,
+    percentage: totalExpenses > 0 ? (cat.amount / totalExpenses * 100) : 0,
+  }));
+
+  // Agregowane dane dla wykresu słupkowego - tylko 2 słupki
+  const timeChartData = [
+    {
+      name: 'Przychody',
+      Kwota: monthlyIncome
+    },
+    {
+      name: 'Wydatki',
+      Kwota: monthlyExpense
+    }
+  ];
+
+  
+  // Brak etykiet procentowych na samym wykresie – czyściej, wartości w tooltipie
+  const renderCustomLabel = () => null;
+
+  // Render center content for donut chart
+  const renderCenterContent = () => {
+    return (
+      <g>
+        {/* Kwota podniesiona bliżej górnej części środka koła */}
+        <text
+          x="50%"
+          y="43%"
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{ fontSize: '24px', fontWeight: 'bold', fill: '#1f2937' }}
+        >
+          {formatCurrency(totalExpenses)}
+        </text>
+        {/* Podpis tuż pod kwotą */}
+        <text
+          x="50%"
+          y="50%"
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{ fontSize: '14px', fill: '#6b7280' }}
+        >
+          Całkowite wydatki
+        </text>
+      </g>
+    );
   };
   
   // Icons for financial summary cards
@@ -75,6 +237,25 @@ export default function Dashboard() {
     return icons[index] || icons[0];
   };
   
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Ładowanie danych...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Welcome section */}
@@ -110,27 +291,130 @@ export default function Dashboard() {
       
       {/* Charts section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Wydatki według kategorii</h3>
-          <div className="h-64 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-40 h-40 mx-auto bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-full flex items-center justify-center text-white font-medium">
-                Wykres kołowy
-              </div>
-              <p className="text-sm text-gray-500 mt-4">Wizualizacja wydatków według kategorii</p>
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">Wydatki według kategorii</h3>
+            <div className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+              {categoryChartData.length} {categoryChartData.length === 1 ? 'kategoria' : 'kategorii'}
             </div>
+          </div>
+          <div className="h-80">
+            {categoryChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={renderCustomLabel}
+                    outerRadius={110}
+                    innerRadius={65}
+                    dataKey="value"
+                    paddingAngle={2}
+                    isAnimationActive={false}
+                  >
+                    {categoryChartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </Pie>
+                  {renderCenterContent()}
+                  <Tooltip 
+                    formatter={(value: number | string) => formatCurrency(Number(value))}
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '10px 14px'
+                    }}
+                    labelStyle={{ fontWeight: '600', color: '#1f2937' }}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    iconType="circle"
+                    wrapperStyle={{ 
+                      paddingTop: '20px',
+                      fontSize: '13px'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500">Brak danych do wyświetlenia</p>
+                  <p className="text-gray-400 text-sm mt-1">Dodaj transakcje, aby zobaczyć wykres</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Przychody i wydatki</h3>
-          <div className="h-64 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-full h-40 mx-auto bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-medium">
-                Wykres słupkowy
-              </div>
-              <p className="text-sm text-gray-500 mt-4">Porównanie przychodów i wydatków w czasie</p>
+        <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">Przychody i wydatki</h3>
+            <div className="text-sm text-gray-500">
+              Bieżący miesiąc
             </div>
+          </div>
+          <div className="h-80">
+            {monthlyIncome > 0 || monthlyExpense > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={timeChartData}
+                  margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fill: '#4b5563', fontSize: 14 }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#4b5563', fontSize: 13 }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
+                  />
+                  <Tooltip 
+                    formatter={(value: number | string) => formatCurrency(Number(value))}
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '10px 14px'
+                    }}
+                    cursor={{ fill: 'rgba(99, 102, 241, 0.05)' }}
+                  />
+                  <Bar 
+                    dataKey="Kwota" 
+                    fill="#6366f1"
+                    radius={[8, 8, 0, 0]}
+                    maxBarSize={120}
+                    isAnimationActive={false}
+                  >
+                    {timeChartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.name === 'Przychody' ? '#22c55e' : '#ef4444'}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500">Brak danych do wyświetlenia</p>
+                  <p className="text-gray-400 text-sm mt-1">Dodaj transakcje, aby zobaczyć wykres</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -139,61 +423,90 @@ export default function Dashboard() {
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-gray-800">Ostatnie transakcje</h3>
-          <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+          <button 
+            onClick={() => router.push('/dashboard/transactions')}
+            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+          >
             Zobacz wszystkie
           </button>
         </div>
         
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <th className="px-4 py-3 border-b border-gray-200">Nazwa</th>
-                <th className="px-4 py-3 border-b border-gray-200">Kategoria</th>
-                <th className="px-4 py-3 border-b border-gray-200">Data</th>
-                <th className="px-4 py-3 border-b border-gray-200">Kwota</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {recentTransactions.map((transaction) => (
-                <tr key={transaction.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-800">{transaction.title}</div>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      {transaction.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {transaction.date}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                    <span className={transaction.amount > 0 ? 'text-emerald-600' : 'text-red-600'}>
-                      {formatCurrency(transaction.amount)}
-                    </span>
-                  </td>
+          {transactions.length > 0 ? (
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 border-b border-gray-200">Nazwa</th>
+                  <th className="px-4 py-3 border-b border-gray-200">Kategoria</th>
+                  <th className="px-4 py-3 border-b border-gray-200">Data</th>
+                  <th className="px-4 py-3 border-b border-gray-200">Kwota</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {transactions.map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-800">{transaction.title}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {transaction.category?.name || 'Brak kategorii'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(transaction.date).toLocaleDateString('pl-PL')}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                      <span className={transaction.category?.isIncome ? 'text-emerald-600' : 'text-red-600'}>
+                        {transaction.category?.isIncome ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Brak transakcji do wyświetlenia</p>
+            </div>
+          )}
         </div>
       </div>
       
       {/* Quick actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {quickActionsData.map((action, index) => (
-          <QuickActionCard
-            key={action.id}
-            title={action.title}
-            description={action.description}
-            icon={getQuickActionIcon(index)}
-            buttonText={action.buttonText}
-            gradientFrom={action.gradientFrom}
-            gradientTo={action.gradientTo}
-            textColor={action.textColor}
-          />
-        ))}
+        {quickActionsData.map((action, index) => {
+          // Docelowa ścieżka w zależności od akcji
+          const getTargetPath = () => {
+            switch (action.id) {
+              case 1:
+                // Dodaj transakcję
+                return '/dashboard/transactions';
+              case 2:
+                // Utwórz budżet
+                return '/dashboard/budget';
+              case 3:
+                // Cel oszczędnościowy
+                return '/dashboard/savings-goals';
+              default:
+                return '/dashboard';
+            }
+          };
+
+          return (
+            <QuickActionCard
+              key={action.id}
+              title={action.title}
+              description={action.description}
+              icon={getQuickActionIcon(index)}
+              buttonText={action.buttonText}
+              gradientFrom={action.gradientFrom}
+              gradientTo={action.gradientTo}
+              textColor={action.textColor}
+              onClick={() => router.push(getTargetPath())}
+            />
+          );
+        })}
       </div>
     </div>
   );

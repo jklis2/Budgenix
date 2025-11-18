@@ -65,9 +65,9 @@ export const quickActionsData = [
     title: 'Cel oszczędnościowy',
     description: 'Ustaw nowy cel oszczędnościowy i śledź swoje postępy',
     buttonText: 'Ustaw cel',
-    gradientFrom: 'amber-500',
-    gradientTo: 'amber-700',
-    textColor: 'text-amber-200'
+    gradientFrom: 'yellow-500',
+    gradientTo: 'orange-600',
+    textColor: 'text-yellow-100'
   }
 ];
 
