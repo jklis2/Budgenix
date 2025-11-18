@@ -4,7 +4,7 @@ export default function MainFooter({ isSidebarOpen }: { isSidebarOpen: boolean }
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className={`bg-white border-t border-gray-200 py-4 px-6 transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
+    <footer className={`bg-white border-t border-gray-200 py-4 px-4 md:px-6 transition-all duration-300 ${isSidebarOpen ? "lg:ml-64" : "ml-0"}`}>
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         <div className="flex items-center mb-3 md:mb-0">
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white mr-2">

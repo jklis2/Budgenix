@@ -8,9 +8,11 @@ import { formatCurrency } from "@/constants/accountsData";
 
 interface MainSidebarProps {
   isOpen?: boolean;
+  isMobile?: boolean;
+  onClose?: () => void;
 }
 
-export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
+export default function MainSidebar({ isOpen = true, isMobile = false, onClose }: MainSidebarProps) {
   const pathname = usePathname();
   const [totalBalance, setTotalBalance] = useState<number | null>(null);
 
@@ -63,11 +65,13 @@ export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
   }, []);
 
   return (
-    <aside className={`bg-gradient-to-b from-indigo-900 to-indigo-800 text-white w-64 h-screen fixed top-0 left-0 shadow-xl transition-all duration-300 ease-in-out transform ${
+    <aside className={`bg-gradient-to-b from-indigo-900 to-indigo-800 text-white fixed top-0 left-0 shadow-xl transition-all duration-300 ease-in-out transform ${
       isOpen ? 'translate-x-0' : '-translate-x-full'
-    } z-50 flex flex-col`}>
+    } ${
+      isMobile ? 'w-full h-screen z-50' : 'w-64 h-screen z-50 lg:z-30'
+    } flex flex-col`}>
       {/* Header z logo */}
-      <div className="h-16 flex items-center justify-center border-b border-indigo-700">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-indigo-700">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,6 +80,19 @@ export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
           </div>
           <span className="text-xl font-bold tracking-tight">Budgenix</span>
         </div>
+        
+        {/* Close button for mobile */}
+        {isMobile && onClose && (
+          <button 
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-indigo-700/50 transition-colors lg:hidden"
+            aria-label="Zamknij menu"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
       
       {/* Sekcja balansu */}

@@ -11,9 +11,11 @@ type UserData = {
 export default function MainNavbar({
   isSidebarOpen,
   setIsSidebarOpen,
+  isMobile = false,
 }: {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
+  isMobile?: boolean;
 }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -79,7 +81,9 @@ export default function MainNavbar({
   };
 
   return (
-    <nav className={`bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 transition-all duration-300 shadow-sm ${isSidebarOpen ? "ml-64" : "ml-0"}`}>
+    <nav className={`bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-6 transition-all duration-300 shadow-sm ${
+      isSidebarOpen && !isMobile ? "lg:ml-64" : "ml-0"
+    }`}>
       <div className="flex items-center">
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
