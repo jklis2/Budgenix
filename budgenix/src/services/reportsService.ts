@@ -41,6 +41,15 @@ export interface ReportFilters {
   period?: 'month' | 'quarter' | 'year';
 }
 
+export interface FinancialInsight {
+  title: string;
+  description: string;
+  type: 'positive' | 'negative' | 'neutral' | 'warning';
+  icon: string;
+  priority: number; // 1-5, gdzie 5 to najważniejsze
+  category: 'savings' | 'expenses' | 'budget' | 'trends' | 'categories';
+}
+
 /**
  * Pobiera statystyki dla wybranego okresu
  */
@@ -347,4 +356,235 @@ export const getBudgetComparison = async (filters: ReportFilters): Promise<Budge
     console.error('Błąd pobierania porównania budżetu:', error);
     throw error;
   }
+};
+
+/**
+ * Generuje spostrzeżenia finansowe na podstawie danych
+ */
+export const generateFinancialInsights = (
+  stats: ReportStats,
+  budgetComparisons: BudgetComparison[],
+  periodType: 'month' | 'quarter' | 'year'
+): FinancialInsight[] => {
+  const insights: FinancialInsight[] = [];
+  
+  // 1. Analiza oszczędności
+  if (stats.savingsRate > 0) {
+    if (stats.savingsRate >= 30) {
+      insights.push({
+        title: 'Świetna stopa oszczędności! 🎉',
+        description: `Oszczędzasz ${stats.savingsRate}% swoich przychodów. To wynik powyżej zalecanych 20%. Kontynuuj dobrą pracę!`,
+        type: 'positive',
+        icon: '💰',
+        priority: 5,
+        category: 'savings'
+      });
+    } else if (stats.savingsRate >= 20) {
+      insights.push({
+        title: 'Dobra stopa oszczędności',
+        description: `Oszczędzasz ${stats.savingsRate}% przychodów. To zdrowa stopa oszczędności zgodna z rekomendacjami finansowymi.`,
+        type: 'positive',
+        icon: '📈',
+        priority: 4,
+        category: 'savings'
+      });
+    } else if (stats.savingsRate >= 10) {
+      insights.push({
+        title: 'Potencjał do zwiększenia oszczędności',
+        description: `Obecnie oszczędzasz ${stats.savingsRate}% przychodów. Rozważ zwiększenie do 20% dla lepszej stabilności finansowej.`,
+        type: 'neutral',
+        icon: '💡',
+        priority: 3,
+        category: 'savings'
+      });
+    } else {
+      insights.push({
+        title: 'Niska stopa oszczędności',
+        description: `Oszczędzasz tylko ${stats.savingsRate}% przychodów. Spróbuj znaleźć obszary do optymalizacji wydatków.`,
+        type: 'warning',
+        icon: '⚠️',
+        priority: 5,
+        category: 'savings'
+      });
+    }
+  } else {
+    insights.push({
+      title: 'Wydatki przekraczają przychody',
+      description: `Wydajesz więcej niż zarabiasz (${Math.abs(stats.savingsRate)}% deficytu). Wymaga to natychmiastowej uwagi!`,
+      type: 'negative',
+      icon: '🚨',
+      priority: 5,
+      category: 'savings'
+    });
+  }
+
+  // 2. Analiza trendów
+  if (stats.timeStats && stats.timeStats.length >= 2) {
+    const recentPeriods = stats.timeStats.slice(-3);
+    const olderPeriods = stats.timeStats.slice(0, -3);
+    
+    if (recentPeriods.length >= 2 && olderPeriods.length >= 2) {
+      const recentAvgExpense = recentPeriods.reduce((sum, p) => sum + p.expense, 0) / recentPeriods.length;
+      const olderAvgExpense = olderPeriods.reduce((sum, p) => sum + p.expense, 0) / olderPeriods.length;
+      const expenseChange = ((recentAvgExpense - olderAvgExpense) / olderAvgExpense) * 100;
+
+      if (expenseChange > 15) {
+        insights.push({
+          title: 'Rosnące wydatki - uwaga!',
+          description: `Twoje wydatki wzrosły o ${expenseChange.toFixed(1)}% w ostatnich okresach. Przeanalizuj, co się zmieniło.`,
+          type: 'warning',
+          icon: '📊',
+          priority: 4,
+          category: 'trends'
+        });
+      } else if (expenseChange < -10) {
+        insights.push({
+          title: 'Spadające wydatki - świetnie!',
+          description: `Twoje wydatki spadły o ${Math.abs(expenseChange).toFixed(1)}%. Dobra optymalizacja budżetu!`,
+          type: 'positive',
+          icon: '📉',
+          priority: 4,
+          category: 'trends'
+        });
+      }
+
+      // Analiza przychodów
+      const recentAvgIncome = recentPeriods.reduce((sum, p) => sum + p.income, 0) / recentPeriods.length;
+      const olderAvgIncome = olderPeriods.reduce((sum, p) => sum + p.income, 0) / olderPeriods.length;
+      const incomeChange = ((recentAvgIncome - olderAvgIncome) / olderAvgIncome) * 100;
+
+      if (incomeChange > 10) {
+        insights.push({
+          title: 'Rosnące przychody! 🎯',
+          description: `Twoje przychody wzrosły o ${incomeChange.toFixed(1)}%. Rozważ zwiększenie stopy oszczędności.`,
+          type: 'positive',
+          icon: '💵',
+          priority: 4,
+          category: 'trends'
+        });
+      } else if (incomeChange < -10) {
+        insights.push({
+          title: 'Spadające przychody',
+          description: `Twoje przychody spadły o ${Math.abs(incomeChange).toFixed(1)}%. Może czas poszukać dodatkowych źródeł dochodu?`,
+          type: 'warning',
+          icon: '📉',
+          priority: 5,
+          category: 'trends'
+        });
+      }
+    }
+  }
+
+  // 3. Analiza kategorii wydatków
+  if (stats.categoryStats && stats.categoryStats.length > 0) {
+    const topCategory = stats.categoryStats[0];
+    
+    if (topCategory.percentage > 50) {
+      insights.push({
+        title: 'Koncentracja wydatków',
+        description: `Kategoria "${topCategory.name}" stanowi ${topCategory.percentage}% wszystkich wydatków. Rozważ dywersyfikację lub optymalizację.`,
+        type: 'neutral',
+        icon: '🎯',
+        priority: 3,
+        category: 'categories'
+      });
+    }
+
+    // Znajdź małe wydatki, które się sumują
+    const smallCategories = stats.categoryStats.filter(cat => cat.percentage < 10 && cat.percentage > 2);
+    if (smallCategories.length >= 3) {
+      const smallTotal = smallCategories.reduce((sum, cat) => sum + cat.percentage, 0);
+      if (smallTotal > 20) {
+        insights.push({
+          title: 'Drobne wydatki się sumują',
+          description: `Masz ${smallCategories.length} kategorii wydatków poniżej 10%, które łącznie stanowią ${smallTotal.toFixed(0)}% budżetu. Warto je przeanalizować.`,
+          type: 'neutral',
+          icon: '🔍',
+          priority: 3,
+          category: 'categories'
+        });
+      }
+    }
+  }
+
+  // 4. Analiza budżetu
+  if (budgetComparisons && budgetComparisons.length > 0) {
+    const overBudget = budgetComparisons.filter(b => b.variance < 0);
+    const underBudget = budgetComparisons.filter(b => b.variance > 0);
+    
+    if (overBudget.length > 0) {
+      const totalOverBudget = Math.abs(overBudget.reduce((sum, b) => sum + b.variance, 0));
+      const worstCategory = overBudget.reduce((worst, current) => 
+        current.variance < worst.variance ? current : worst
+      );
+      
+      insights.push({
+        title: 'Przekroczenie budżetu',
+        description: `Kategoria "${worstCategory.category}" przekroczyła budżet o ${formatCurrency(Math.abs(worstCategory.variance))}. Łącznie przekroczono budżet o ${formatCurrency(totalOverBudget)}.`,
+        type: 'negative',
+        icon: '⚠️',
+        priority: 5,
+        category: 'budget'
+      });
+    }
+    
+    if (underBudget.length >= budgetComparisons.length * 0.7) {
+      insights.push({
+        title: 'Doskonałe zarządzanie budżetem! 🏆',
+        description: `Utrzymujesz się w budżecie w ${underBudget.length} z ${budgetComparisons.length} kategorii. Świetna kontrola wydatków!`,
+        type: 'positive',
+        icon: '🎖️',
+        priority: 4,
+        category: 'budget'
+      });
+    }
+
+    // Najlepsza optymalizacja
+    const bestSaving = underBudget.reduce((best, current) => 
+      current.variance > best.variance ? current : best
+    , underBudget[0] || { variance: 0, category: '' });
+    
+    if (bestSaving && bestSaving.variance > 100) {
+      insights.push({
+        title: 'Najlepsza optymalizacja',
+        description: `Zaoszczędziłeś ${formatCurrency(bestSaving.variance)} w kategorii "${bestSaving.category}". Dobra robota!`,
+        type: 'positive',
+        icon: '🌟',
+        priority: 3,
+        category: 'budget'
+      });
+    }
+  }
+
+  // 5. Porady ogólne
+  const expenseToIncomeRatio = stats.totalIncome > 0 ? (stats.totalExpense / stats.totalIncome) * 100 : 100;
+  
+  if (expenseToIncomeRatio >= 90 && expenseToIncomeRatio < 100) {
+    insights.push({
+      title: 'Niewielki margines bezpieczeństwa',
+      description: `Wydajesz ${expenseToIncomeRatio.toFixed(0)}% swoich przychodów. Stwórz fundusz awaryjny na nieprzewidziane wydatki.`,
+      type: 'warning',
+      icon: '🛡️',
+      priority: 4,
+      category: 'savings'
+    });
+  }
+
+  // 6. Porady dotyczące okresu
+  if (periodType === 'month') {
+    const avgMonthlyExpense = stats.totalExpense;
+    const emergencyFund = avgMonthlyExpense * 6;
+    
+    insights.push({
+      title: 'Fundusz awaryjny',
+      description: `Zalecany fundusz awaryjny dla Twoich miesięcznych wydatków to ${formatCurrency(emergencyFund)} (6 miesięcy wydatków).`,
+      type: 'neutral',
+      icon: '🏦',
+      priority: 2,
+      category: 'savings'
+    });
+  }
+
+  // Sortowanie według priorytetu
+  return insights.sort((a, b) => b.priority - a.priority);
 };

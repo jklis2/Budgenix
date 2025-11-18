@@ -1,8 +1,5 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { 
-  financialInsights
-} from '@/constants/reportsData';
 import ReportSummaryCard from '@/components/ui/ReportSummaryCard';
 import FinancialTrendsChart from '@/components/ui/FinancialTrendsChart';
 import CategorySpendingCard from '@/components/ui/CategorySpendingCard';
@@ -18,9 +15,11 @@ import {
   formatCurrency,
   getPeriodLabel,
   getBudgetComparison,
+  generateFinancialInsights,
   PeriodData,
   CategoryStat,
-  BudgetComparison
+  BudgetComparison,
+  FinancialInsight
 } from '@/services/reportsService';
 
 interface ChartData extends PeriodData {
@@ -45,6 +44,7 @@ export default function ReportsAndAnalytics() {
   const [chartDataSavings, setChartDataSavings] = useState<ChartData[]>([]);
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [budgetComparisons, setBudgetComparisons] = useState<BudgetComparison[]>([]);
+  const [financialInsights, setFinancialInsights] = useState<FinancialInsight[]>([]);
 
   // Pobieranie danych z API
   useEffect(() => {
@@ -112,6 +112,11 @@ export default function ReportsAndAnalytics() {
         });
         console.log('Budget Comparisons:', budgetData);
         setBudgetComparisons(budgetData);
+
+        // Generowanie spostrzeżeń finansowych
+        const insights = generateFinancialInsights(stats, budgetData, selectedPeriod);
+        console.log('Generated Insights:', insights);
+        setFinancialInsights(insights);
 
       } catch (err) {
         console.error('Błąd pobierania danych:', err);
@@ -317,13 +322,50 @@ export default function ReportsAndAnalytics() {
       
       {/* Financial insights */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Spostrzeżenia finansowe</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {financialInsights.map((insight, index) => (
-            <InsightCard key={index} insight={insight} />
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">Spostrzeżenia finansowe</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Inteligentna analiza Twoich finansów
+            </p>
+          </div>
+          {financialInsights.length > 0 && (
+            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
+              {financialInsights.length} {financialInsights.length === 1 ? 'spostrzeżenie' : 'spostrzeżeń'}
+            </span>
+          )}
         </div>
+        
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-gray-50 rounded-lg p-4 border border-gray-100 animate-pulse">
+                <div className="flex items-start">
+                  <div className="w-8 h-8 bg-gray-200 rounded mr-3"></div>
+                  <div className="flex-1">
+                    <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-1"></div>
+                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : financialInsights.length === 0 ? (
+          <div className="text-center py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <p className="text-gray-500">Brak spostrzeżeń do wyświetlenia</p>
+            <p className="text-sm text-gray-400 mt-1">Dodaj więcej transakcji, aby uzyskać analizę finansową</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {financialInsights.map((insight, index) => (
+              <InsightCard key={index} insight={insight} />
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Export options */}
