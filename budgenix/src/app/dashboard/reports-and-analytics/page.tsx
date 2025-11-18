@@ -21,6 +21,12 @@ import {
   BudgetComparison,
   FinancialInsight
 } from '@/services/reportsService';
+import {
+  exportToExcel,
+  exportToCSV,
+  exportToPDF,
+  ReportData
+} from '@/lib/exportReports';
 
 interface ChartData extends PeriodData {
   month: string;
@@ -152,6 +158,46 @@ export default function ReportsAndAnalytics() {
   // Pobierz nazwę okresu
   const periodLabel = getPeriodLabel(selectedPeriod);
   
+  // Funkcje eksportu
+  const handleExport = (type: 'excel' | 'csv' | 'pdf') => {
+    const reportData: ReportData = {
+      totalIncome,
+      totalExpenses,
+      totalSavings,
+      savingsRate,
+      periodLabel,
+      timeStats: chartDataExpenses.map(item => ({
+        period: item.month,
+        income: chartDataIncome.find(i => i.month === item.month)?.amount || 0,
+        expense: item.amount,
+        savings: chartDataSavings.find(i => i.month === item.month)?.amount || 0
+      })),
+      categoryStats: categoryStats.map(cat => ({
+        name: cat.name,
+        amount: cat.amount,
+        percentage: cat.percentage
+      })),
+      budgetComparisons: budgetComparisons.map(b => ({
+        category: b.category,
+        budgeted: b.budgeted,
+        actual: b.actual,
+        variance: b.variance
+      }))
+    };
+
+    switch (type) {
+      case 'excel':
+        exportToExcel(reportData);
+        break;
+      case 'csv':
+        exportToCSV(reportData);
+        break;
+      case 'pdf':
+        exportToPDF(reportData);
+        break;
+    }
+  };
+  
   // Wyświetl komunikat o błędzie jeśli wystąpił
   if (error) {
     return (
@@ -164,7 +210,7 @@ export default function ReportsAndAnalytics() {
   }
   
   return (
-    <div className="space-y-8">
+    <div id="reports-container" className="space-y-8">
       {/* Page header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
@@ -370,26 +416,83 @@ export default function ReportsAndAnalytics() {
       
       {/* Export options */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Eksportuj raport</h2>
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-800">Eksportuj raport</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Pobierz swoje dane finansowe w wybranym formacie
+          </p>
+        </div>
         
-        <div className="flex flex-wrap gap-4">
-          <ExportButton type="pdf" label="PDF" />
-          <ExportButton type="excel" label="Excel" />
-          <ExportButton type="csv" label="CSV" />
-          <ExportButton type="image" label="Obraz" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <ExportButton 
+            type="pdf" 
+            label="Eksport PDF"
+            description="Profesjonalny format dokumentu"
+            onClick={() => handleExport('pdf')}
+            disabled={isLoading}
+          />
+          <ExportButton 
+            type="excel" 
+            label="Eksport Excel"
+            description="Edytowalny arkusz kalkulacyjny"
+            onClick={() => handleExport('excel')}
+            disabled={isLoading}
+          />
+          <ExportButton 
+            type="csv" 
+            label="Eksport CSV"
+            description="Surowe dane do importu"
+            onClick={() => handleExport('csv')}
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Additional info */}
+        <div className="mt-6 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+          <div className="flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div className="text-sm text-indigo-800">
+              <span className="font-medium">Wskazówka:</span> Eksportowane raporty zawierają wszystkie dane z wybranego okresu. 
+              Dla najlepszych wyników zalecamy format PDF dla prezentacji i Excel do dalszej analizy.
+            </div>
+          </div>
         </div>
       </div>
       
       {/* Financial tips */}
-      <TipCard
-        title="Wskazówka finansowa"
-        content="Regularne monitorowanie swoich finansów pomaga w podejmowaniu lepszych decyzji finansowych. Zaleca się przeglądanie swoich raportów finansowych co najmniej raz w miesiącu, aby śledzić postępy i identyfikować obszary wymagające poprawy."
-        icon={
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        }
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <TipCard
+          title="💡 Wskazówka dnia"
+          content="Regularne monitorowanie swoich finansów pomaga w podejmowaniu lepszych decyzji finansowych. Zaleca się przeglądanie swoich raportów finansowych co najmniej raz w miesiącu, aby śledzić postępy i identyfikować obszary wymagające poprawy."
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          }
+        />
+        
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-sm p-6 text-white">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Poradnik zarządzania budżetem</h3>
+              <p className="text-sm text-indigo-100 mb-4">
+                Poznaj zasadę 50/30/20: przeznacz 50% przychodu na potrzeby, 30% na przyjemności i 20% na oszczędności. 
+                To prosty sposób na zrównoważone finanse.
+              </p>
+              <button className="px-4 py-2 bg-white text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors">
+                Dowiedz się więcej
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
