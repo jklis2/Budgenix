@@ -113,7 +113,7 @@ export default function MainSidebar({ isOpen = true, isMobile = false, onClose }
       {/* Menu */}
       <div className="px-3 overflow-y-auto">
         <div className="text-xs text-indigo-300 uppercase font-semibold px-4 mb-2">Menu</div>
-        <ul className="space-y-1">
+        <ul className="space-y-0.5">
           {sidebarTabs.map((tab) => {
             const isActive = pathname === tab.path || 
                            (tab.path !== '/dashboard' && pathname?.startsWith(tab.path));
@@ -123,19 +123,19 @@ export default function MainSidebar({ isOpen = true, isMobile = false, onClose }
               <li key={tab.path}>
                 <Link 
                   href={tab.path} 
-                  className={`group flex items-center py-3 px-4 rounded-lg transition-all duration-200 ${
+                  className={`group flex items-center py-2 px-3 rounded-lg transition-all duration-200 ${
                     isActive 
                       ? 'bg-gradient-to-r from-indigo-700 to-indigo-600 text-white font-medium shadow-lg' 
                       : 'text-indigo-100 hover:bg-indigo-700/50 hover:translate-x-1'
                   }`}
                 >
-                  <div className={`w-10 h-10 flex items-center justify-center rounded-lg mr-3 transition-all duration-200 ${
+                  <div className={`w-8 h-8 flex items-center justify-center rounded-lg mr-2.5 transition-all duration-200 ${
                     isActive 
                       ? 'bg-white/20 shadow-inner' 
                       : 'bg-indigo-800/50 group-hover:bg-indigo-700/70 group-hover:scale-110'
                   }`}>
                     <Icon 
-                      className={`w-5 h-5 transition-all duration-200 ${
+                      className={`w-4 h-4 transition-all duration-200 ${
                         isActive 
                           ? 'text-white' 
                           : 'text-indigo-200 group-hover:text-white'
