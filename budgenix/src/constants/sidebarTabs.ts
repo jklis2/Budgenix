@@ -1,48 +1,60 @@
+import { IconType } from "react-icons";
+import { 
+  MdDashboard, 
+  MdAccountBalance, 
+  MdAccountBalanceWallet,
+  MdCategory,
+  MdReceipt,
+  MdSubscriptions,
+  MdSavings,
+  MdBarChart
+} from "react-icons/md";
+
 export interface SidebarTab {
   label: string;
   path: string;
-  iconPath: string;
+  icon: IconType;
 }
 
 export const sidebarTabs: SidebarTab[] = [
   {
     label: "Dashboard",
     path: "/dashboard",
-    iconPath: "/icons/dashboard.svg"
+    icon: MdDashboard
   },
   {
     label: "Konta",
     path: "/dashboard/accounts",
-    iconPath: "/icons/budget.svg"
+    icon: MdAccountBalance
   },
   {
     label: "Budżet",
     path: "/dashboard/budget",
-    iconPath: "/icons/budget.svg"
+    icon: MdAccountBalanceWallet
   },
   {
     label: "Kategorie",
     path: "/dashboard/categories",
-    iconPath: "/icons/categories.svg"
+    icon: MdCategory
   },
   {
     label: "Transakcje",
     path: "/dashboard/transactions",
-    iconPath: "/icons/transactions.svg"
+    icon: MdReceipt
   },
   {
     label: "Subskrypcje",
     path: "/dashboard/subscriptions",
-    iconPath: "/icons/subscriptions.svg"
+    icon: MdSubscriptions
   },
   {
     label: "Cele oszczędnościowe",
     path: "/dashboard/savings-goals",
-    iconPath: "/icons/savingsGoals.svg"
+    icon: MdSavings
   },
   {
     label: "Raporty i analizy",
     path: "/dashboard/reports-and-analytics",
-    iconPath: "/icons/reportsAndAnalytics.svg"
+    icon: MdBarChart
   }
 ];

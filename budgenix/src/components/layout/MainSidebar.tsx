@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { sidebarTabs } from "@/constants/sidebarTabs";
 import { formatCurrency } from "@/constants/accountsData";
@@ -118,29 +117,35 @@ export default function MainSidebar({ isOpen = true, isMobile = false, onClose }
           {sidebarTabs.map((tab) => {
             const isActive = pathname === tab.path || 
                            (tab.path !== '/dashboard' && pathname?.startsWith(tab.path));
+            const Icon = tab.icon;
             
             return (
               <li key={tab.path}>
                 <Link 
                   href={tab.path} 
-                  className={`flex items-center py-2.5 px-4 rounded-lg transition-all duration-200 ${
+                  className={`group flex items-center py-3 px-4 rounded-lg transition-all duration-200 ${
                     isActive 
-                      ? 'bg-indigo-700 text-white font-medium' 
-                      : 'text-indigo-100 hover:bg-indigo-700/50'
+                      ? 'bg-gradient-to-r from-indigo-700 to-indigo-600 text-white font-medium shadow-lg' 
+                      : 'text-indigo-100 hover:bg-indigo-700/50 hover:translate-x-1'
                   }`}
                 >
-                  <div className={`w-8 h-8 flex items-center justify-center rounded-md mr-3 ${
-                    isActive ? 'bg-indigo-600' : 'bg-indigo-800/50'
+                  <div className={`w-10 h-10 flex items-center justify-center rounded-lg mr-3 transition-all duration-200 ${
+                    isActive 
+                      ? 'bg-white/20 shadow-inner' 
+                      : 'bg-indigo-800/50 group-hover:bg-indigo-700/70 group-hover:scale-110'
                   }`}>
-                    <Image 
-                      src={tab.iconPath} 
-                      alt={`${tab.label} icon`} 
-                      width={20} 
-                      height={20}
-                      className="opacity-90"
+                    <Icon 
+                      className={`w-5 h-5 transition-all duration-200 ${
+                        isActive 
+                          ? 'text-white' 
+                          : 'text-indigo-200 group-hover:text-white'
+                      }`}
                     />
                   </div>
-                  <span className="text-sm">{tab.label}</span>
+                  <span className="text-sm font-medium">{tab.label}</span>
+                  {isActive && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  )}
                 </Link>
               </li>
             );
