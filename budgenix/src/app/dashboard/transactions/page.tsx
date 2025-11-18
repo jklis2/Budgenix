@@ -22,6 +22,7 @@ import {
 import TransactionModal from '@/components/ui/TransactionModal';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import Toast from '@/components/ui/Toast';
+import { exportTransactionsToExcel } from '@/lib/exportTransactionsToExcel';
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -341,6 +342,7 @@ export default function Transactions() {
           borderColor={tip.borderColorClass}
           titleColor={tip.textColorClass}
           contentColor={tip.descriptionColorClass}
+          actions={index === 0 ? [{ label: 'Pobierz plik', onClick: () => exportTransactionsToExcel(transactions) }] : []}
         />
       ))}
       
