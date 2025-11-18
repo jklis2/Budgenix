@@ -23,13 +23,20 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Budget not found' }, { status: 404 });
     }
 
-    // Get all transactions within the budget period for this user
+    // POPRAWKA: Pobieramy transakcje z BIEŻĄCEGO MIESIĄCA zamiast okresu budżetu dla spójności
+    const now = new Date();
+    // Ustawiamy godzinę na początek dnia (00:00:00) aby uniknąć problemów ze strefą czasową
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    // Ustawiamy godzinę na koniec dnia (23:59:59) aby uwzględnić cały ostatni dzień
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    // Get all transactions within the CURRENT MONTH for this user
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: budget.userId,
         date: {
-          gte: budget.startDate,
-          lte: budget.endDate
+          gte: firstDayOfMonth,
+          lte: lastDayOfMonth
         },
         category: {
           isIncome: false // Only include expenses
@@ -40,18 +47,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       }
     });
 
-    // Calculate spent amount per category
+    // Calculate spent amount per category - UŻYWAMY Math.abs() dla spójności
     const categorySpending: Record<string, number> = {};
     transactions.forEach(transaction => {
       const categoryId = transaction.categoryId;
       if (!categorySpending[categoryId]) {
         categorySpending[categoryId] = 0;
       }
-      categorySpending[categoryId] += transaction.amount;
+      // Zawsze używamy wartości bezwzględnej
+      categorySpending[categoryId] += Math.abs(transaction.amount);
     });
 
-    // Calculate total spent and remaining amounts
-    const totalSpent = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+    // Calculate total spent and remaining amounts - UŻYWAMY Math.abs() dla spójności
+    const totalSpent = transactions.reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0);
     const remainingAmount = budget.totalAmount - totalSpent;
     const spentPercentage = Math.round((totalSpent / budget.totalAmount) * 100);
 
@@ -74,8 +82,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       };
     });
 
-    // Prepare budget summary
-    const currentMonth = budget.startDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+    // Prepare budget summary - POPRAWKA: Pokazujemy bieżący miesiąc
+    const currentMonth = now.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
 
     const stats = {
       summary: {

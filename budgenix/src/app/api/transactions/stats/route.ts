@@ -194,13 +194,17 @@ export async function GET(request: NextRequest) {
     // Łączenie statystyk z informacjami o kategoriach
     const categoryStatsWithInfo = categoryStats.map(stat => {
       const category = categories.find(c => c.id === stat.categoryId);
+      // POPRAWKA: Używamy Math.abs() dla wydatków aby zapewnić spójność
+      const amount = stat._sum.amount || 0;
+      const totalAmount = category?.isIncome === false ? Math.abs(amount) : amount;
+      
       return {
         categoryId: stat.categoryId,
         name: category?.name,
         icon: category?.icon,
         color: category?.color,
         isIncome: category?.isIncome,
-        totalAmount: stat._sum.amount,
+        totalAmount: totalAmount,
         count: stat._count
       };
     });
@@ -245,11 +249,16 @@ export async function GET(request: NextRequest) {
 
     const timeStats = await prisma.$queryRawUnsafe(rawQuery);
 
+    // POPRAWKA: Używamy Math.abs() dla wydatków aby zapewnić spójność
+    const totalIncome = totalStats[0]._sum.amount || 0;
+    const totalExpenseRaw = totalStats[1]._sum.amount || 0;
+    const totalExpense = Math.abs(totalExpenseRaw);
+    
     return NextResponse.json({
       overview: {
-        totalIncome: totalStats[0]._sum.amount || 0,
-        totalExpense: totalStats[1]._sum.amount || 0,
-        balance: (totalStats[0]._sum.amount || 0) - (totalStats[1]._sum.amount || 0),
+        totalIncome: totalIncome,
+        totalExpense: totalExpense,
+        balance: totalIncome - totalExpense,
         incomeCount: totalStats[0]._count,
         expenseCount: totalStats[1]._count,
         highestIncome: totalStats[2],

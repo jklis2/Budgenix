@@ -74,13 +74,25 @@ export default function Categories() {
       
       console.log('Pobrano aktywny budżet:', activeBudget?.name);
       
-      // Pobieramy transakcje dla okresu budżetowego przy użyciu serwisu transactionService
+      // POPRAWKA: Pobieramy transakcje dla BIEŻĄCEGO MIESIĄCA zamiast okresu budżetu dla spójności
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      // Formatowanie lokalne zamiast UTC
+      const formatLocalDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
       let transactions: ApiTransaction[] = [];
       try {
         // Używamy gotowego serwisu do pobierania transakcji, który obsługuje autoryzację JWT
         const response = await getTransactions({
-          dateFrom: activeBudget.startDate,
-          dateTo: activeBudget.endDate,
+          dateFrom: formatLocalDate(firstDay),
+          dateTo: formatLocalDate(lastDay),
           limit: 1000 // Pobieramy dużą liczbę transakcji, żeby mieć pełny obraz
         });
         
@@ -114,12 +126,14 @@ export default function Categories() {
         
         console.log(`Transakcje dla kategorii ${category.name}:`, categoryTransactions.length);
         
-        // Obliczamy sumę faktycznych wydatków - bierzemy tylko transakcje ujemne (wydatki)
-        const negativeTransactions = categoryTransactions.filter(t => t.amount < 0);
+        // Obliczamy sumę faktycznych wydatków - POPRAWKA: filtrujemy po category.isIncome dla spójności
+        const expenseTransactions = categoryTransactions.filter(t => 
+          t.category?.isIncome === false || (!t.category && t.amount !== undefined)
+        );
         
-        // Sumujemy wartości bezwzględne ujemnych transakcji
-        const spent = negativeTransactions.reduce((sum: number, t) => {
-          // Konwertujemy amount na liczbę, jeśli jest stringiem
+        // Sumujemy wartości bezwzględne transakcji wydatkowych
+        const spent = expenseTransactions.reduce((sum: number, t) => {
+          // Konwertujemy amount na liczbę, jeśli jest stringiem i używamy wartości bezwzględnej
           const amount = typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount;
           return sum + Math.abs(Number(amount));
         }, 0);

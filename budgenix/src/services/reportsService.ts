@@ -134,38 +134,43 @@ export const getReportStats = async (filters: ReportFilters): Promise<ReportStat
  */
 export const getPeriodDates = (periodType: 'month' | 'quarter' | 'year'): { startDate: string; endDate: string } => {
   const now = new Date();
-  const endDate = now.toISOString().split('T')[0]; // Dzisiejsza data
   let startDate: Date;
+  let endDate: Date;
 
   switch (periodType) {
     case 'month':
-      // Ostatnie 6 miesięcy
-      startDate = new Date(now);
-      startDate.setMonth(now.getMonth() - 5);
-      startDate.setDate(1);
+      // BIEŻĄCY MIESIĄC - od pierwszego do ostatniego dnia
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       break;
     case 'quarter':
-      // Ostatnie 4 kwartały (12 miesięcy)
-      startDate = new Date(now);
-      startDate.setMonth(now.getMonth() - 11);
-      startDate.setDate(1);
+      // Bieżący kwartał
+      const currentQuarter = Math.floor(now.getMonth() / 3);
+      startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+      endDate = new Date(now.getFullYear(), (currentQuarter + 1) * 3, 0);
       break;
     case 'year':
-      // Ostatnie 3 lata
-      startDate = new Date(now);
-      startDate.setFullYear(now.getFullYear() - 2);
-      startDate.setMonth(0);
-      startDate.setDate(1);
+      // Bieżący rok
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now.getFullYear(), 11, 31);
       break;
     default:
-      startDate = new Date(now);
-      startDate.setMonth(now.getMonth() - 5);
-      startDate.setDate(1);
+      // Domyślnie bieżący miesiąc
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   }
+  
+  // POPRAWKA: Formatowanie lokalne zamiast UTC aby uniknąć przesunięcia o dzień
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   return {
-    startDate: startDate.toISOString().split('T')[0],
-    endDate
+    startDate: formatLocalDate(startDate),
+    endDate: formatLocalDate(endDate)
   };
 };
 

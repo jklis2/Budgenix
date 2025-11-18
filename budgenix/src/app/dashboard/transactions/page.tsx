@@ -28,7 +28,24 @@ export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [filters, setFilters] = useState<TransactionFilters>({});
+  
+  // DOMYŚLNY FILTR: Bieżący miesiąc (od 1 do ostatniego dnia)
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+  // POPRAWKA: Używamy lokalnego formatowania zamiast UTC
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const [filters, setFilters] = useState<TransactionFilters>({
+    dateFrom: formatLocalDate(firstDay),
+    dateTo: formatLocalDate(lastDay)
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ income: 0, expenses: 0, balance: 0 });
   const [totalCount, setTotalCount] = useState(0);
@@ -69,15 +86,15 @@ export default function Transactions() {
         setTotalCount(visibleTransactions.length);
 
         // Statystyki liczone z aktualnie widocznych transakcji
+        // POPRAWKA: Filtrujemy po category.isIncome zamiast po znaku amount dla spójności
         const income = visibleTransactions
-          .filter(tx => tx.amount >= 0)
-          .reduce((sum, tx) => sum + tx.amount, 0);
+          .filter(tx => tx.category?.isIncome === true)
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
-        const expenseRaw = visibleTransactions
-          .filter(tx => tx.amount < 0)
-          .reduce((sum, tx) => sum + tx.amount, 0);
+        const expenses = visibleTransactions
+          .filter(tx => tx.category?.isIncome === false)
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
-        const expenses = Math.abs(expenseRaw);
         const balance = income - expenses;
 
         setStats({
@@ -248,7 +265,12 @@ export default function Transactions() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Transakcje</h1>
-          <p className="text-gray-500 mt-1">Przeglądaj i zarządzaj swoimi transakcjami</p>
+          <p className="text-gray-500 mt-1">
+            Przeglądaj i zarządzaj swoimi transakcjami • 
+            <span className="ml-1 text-indigo-600 font-medium">
+              {new Date().toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}
+            </span>
+          </p>
         </div>
         <div className="mt-4 md:mt-0">
           <button 
