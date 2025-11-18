@@ -77,17 +77,6 @@ const TransactionFiltersComponent: React.FC<TransactionFiltersProps> = ({
     onFilterChange(filters);
   }, [filters, onFilterChange]);
 
-  // Effect do opóźnienia wyszukiwania podczas pisania
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchTerm !== filters.search) {
-        handleFilterChange('search', searchTerm);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filters.search, handleFilterChange]);
-
   const clearFilters = () => {
     setFilters({});
     setSearchTerm('');
@@ -135,7 +124,10 @@ const TransactionFiltersComponent: React.FC<TransactionFiltersProps> = ({
             id="transaction-search"
             placeholder="Szukaj transakcji..."
             value={searchTerm}
-            onChange={(value: string) => setSearchTerm(value)}
+            onChange={(value: string) => {
+              setSearchTerm(value);
+              handleFilterChange('search', value);
+            }}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

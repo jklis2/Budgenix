@@ -454,27 +454,6 @@ export default function Subscriptions() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Subskrypcje</h1>
         <div className="flex space-x-4">
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-1 rounded ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
-            >
-              Lista
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`px-3 py-1 rounded ${viewMode === 'table' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
-            >
-              Tabela
-            </button>
-          </div>
-          <button
-            onClick={processSubscriptionPayments}
-            disabled={processingPayments}
-            className={`${processingPayments ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white px-4 py-2 rounded transition-colors mr-2`}
-          >
-            {processingPayments ? 'Przetwarzanie...' : 'Sprawdź płatności'}
-          </button>
           <button
             onClick={() => {
               setIsModalOpen(true);

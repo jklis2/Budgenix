@@ -48,8 +48,12 @@ export async function GET(request: NextRequest) {
     const isIncome = searchParams.get('isIncome');
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0;
-    const sortBy = searchParams.get('sortBy') || 'date';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const requestedSortBy = searchParams.get('sortBy') || 'date';
+    const allowedSortFields = ['date', 'amount', 'title'];
+    const sortBy = allowedSortFields.includes(requestedSortBy) ? requestedSortBy : 'date';
+
+    const requestedSortOrder = searchParams.get('sortOrder') || 'desc';
+    const sortOrder = requestedSortOrder === 'asc' || requestedSortOrder === 'desc' ? requestedSortOrder : 'desc';
 
     // Budowanie filtrów
     const filters: TransactionFilters = {
@@ -160,7 +164,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Błąd podczas pobierania transakcji:', error);
-    return NextResponse.json({ error: 'Wystąpił błąd podczas pobierania transakcji' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Wystąpił błąd podczas pobierania transakcji';
+    return NextResponse.json({ error: 'Wystąpił błąd podczas pobierania transakcji', message }, { status: 500 });
   }
 }
 

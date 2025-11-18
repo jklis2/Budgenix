@@ -1,8 +1,10 @@
 "use client";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { sidebarTabs } from "@/constants/sidebarTabs";
+import { formatCurrency } from "@/constants/accountsData";
 
 interface MainSidebarProps {
   isOpen?: boolean;
@@ -10,6 +12,55 @@ interface MainSidebarProps {
 
 export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
   const pathname = usePathname();
+  const [totalBalance, setTotalBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchTotalBalance = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          return;
+        }
+
+        const response = await fetch("/api/accounts", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const accounts = await response.json();
+        if (Array.isArray(accounts)) {
+          const sum = accounts.reduce(
+            (acc: number, account: { balance: number }) => acc + (account.balance || 0),
+            0
+          );
+          setTotalBalance(sum);
+        }
+      } catch (error) {
+        console.error("Failed to fetch accounts for sidebar balance:", error);
+      }
+    };
+
+    fetchTotalBalance();
+
+    const handleAccountsUpdated = () => {
+      fetchTotalBalance();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("accountsUpdated", handleAccountsUpdated);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("accountsUpdated", handleAccountsUpdated);
+      }
+    };
+  }, []);
 
   return (
     <aside className={`bg-gradient-to-b from-indigo-900 to-indigo-800 text-white w-64 h-screen fixed top-0 left-0 shadow-xl transition-all duration-300 ease-in-out transform ${
@@ -31,7 +82,9 @@ export default function MainSidebar({ isOpen = true }: MainSidebarProps) {
       <div className="px-4 mt-6">
         <div className="bg-indigo-700/30 rounded-lg p-3 mb-6">
           <div className="text-xs text-indigo-200 uppercase font-semibold mb-1">Twój balans</div>
-          <div className="text-2xl font-bold">0,00 zł</div>
+          <div className="text-2xl font-bold">
+            {totalBalance !== null ? formatCurrency(totalBalance, "PLN") : "-"}
+          </div>
           <div className="text-xs text-emerald-400 mt-1 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />

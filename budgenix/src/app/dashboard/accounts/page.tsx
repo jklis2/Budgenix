@@ -85,6 +85,10 @@ export default function Accounts() {
     setIsFormModalOpen(false);
     setEditingAccount(null);
     fetchAccounts();
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('accountsUpdated'));
+    }
   };
 
   const handleSearch = (term: string) => {
@@ -124,9 +128,9 @@ export default function Accounts() {
       <div className="mb-6">
         <SearchBar 
           placeholder="Wyszukaj konto..." 
-          onSearch={handleSearch} 
+          onSearch={handleSearch}
           value={searchTerm}
-          onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setSearchTerm(e.target.value)}
+          onChange={(value: string) => setSearchTerm(value)}
         />
       </div>
 

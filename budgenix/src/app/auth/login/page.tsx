@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthInput from "@/components/ui/AuthInput";
 import Link from "next/link";
+import { jwtDecode } from "jwt-decode";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,11 +18,33 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get("redirect") || "/dashboard";
 
-  // Check if user is already logged in
+  // Check if user is already logged in with a valid token
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
+
+    if (!token) return;
+
+    try {
+      const decoded: { id?: string; email?: string; exp?: number } = jwtDecode(token);
+
+      // Token must have required fields and not be expired
+      if (!decoded.id || !decoded.email || !decoded.exp) {
+        localStorage.removeItem("token");
+        return;
+      }
+
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      if (decoded.exp < nowInSeconds) {
+        localStorage.removeItem("token");
+        return;
+      }
+
+      // If token is valid, redirect
       router.push(redirectPath);
+    } catch (error) {
+      // If decoding fails, clear invalid token and stay on login page
+      console.error("Invalid JWT token on login page: ", error);
+      localStorage.removeItem("token");
     }
   }, [redirectPath, router]);
 

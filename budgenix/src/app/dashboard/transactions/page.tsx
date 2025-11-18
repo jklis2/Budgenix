@@ -9,9 +9,9 @@ import {
   Transaction, 
   TransactionFilters, 
   getTransactions, 
-  getTransactionStats, 
   Category, 
   Account, 
+  
   deleteTransaction, 
   getCategories, 
   getAccounts,
@@ -53,8 +53,37 @@ export default function Transactions() {
       try {
         setIsLoading(true);
         const response = await getTransactions(filters);
-        setTransactions(response.transactions);
-        setTotalCount(response.totalCount);
+
+        // Proste wyszukiwanie po stronie frontu po tytule transakcji
+        const searchTerm = (filters.search || '').toLowerCase();
+        let visibleTransactions = response.transactions;
+
+        if (searchTerm) {
+          visibleTransactions = response.transactions.filter(tx =>
+            (tx.title || '').toLowerCase().includes(searchTerm)
+          );
+        }
+
+        setTransactions(visibleTransactions);
+        setTotalCount(visibleTransactions.length);
+
+        // Statystyki liczone z aktualnie widocznych transakcji
+        const income = visibleTransactions
+          .filter(tx => tx.amount >= 0)
+          .reduce((sum, tx) => sum + tx.amount, 0);
+
+        const expenseRaw = visibleTransactions
+          .filter(tx => tx.amount < 0)
+          .reduce((sum, tx) => sum + tx.amount, 0);
+
+        const expenses = Math.abs(expenseRaw);
+        const balance = income - expenses;
+
+        setStats({
+          income,
+          expenses,
+          balance,
+        });
         
         // Pobieranie kategorii i kont z API
         try {
@@ -73,13 +102,8 @@ export default function Transactions() {
           setAccounts([]);
         }
         
-        // Pobieranie statystyk
-        const statsResponse = await getTransactionStats();
-        setStats({
-          income: statsResponse.totalIncome,
-          expenses: Math.abs(statsResponse.totalExpense),
-          balance: statsResponse.balance
-        });
+        // Dodatkowe statystyki z API mogą być pobrane osobno, jeśli będzie potrzebne
+
       } catch (error) {
         console.error('Błąd podczas pobierania danych:', error);
         showToast('Wystąpił błąd podczas pobierania danych', 'error');
@@ -143,8 +167,12 @@ export default function Transactions() {
       }
       
       setIsTransactionModalOpen(false);
-      // Odświeżenie danych
-      handleFilterChange(filters);
+      // Odświeżenie danych - wymuszenie zmiany referencji filtrów
+      setFilters(prev => ({ ...prev }));
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('accountsUpdated'));
+      }
     } catch (error) {
       console.error('Błąd podczas zapisywania transakcji:', error);
       showToast('Wystąpił błąd podczas zapisywania transakcji', 'error');
@@ -341,8 +369,12 @@ export default function Transactions() {
                 await deleteTransaction(transactionToDelete.id);
                 setIsDeleteModalOpen(false);
                 showToast('Transakcja została usunięta', 'success');
-                // Odświeżenie danych
-                handleFilterChange(filters);
+                // Odświeżenie danych - wymuszenie zmiany referencji filtrów
+                setFilters(prev => ({ ...prev }));
+
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('accountsUpdated'));
+                }
               }
             } catch (error) {
               console.error('Błąd podczas usuwania transakcji:', error);

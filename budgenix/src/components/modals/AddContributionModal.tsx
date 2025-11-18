@@ -98,6 +98,10 @@ const AddContributionModal: React.FC<AddContributionModalProps> = ({
       });
       
       onSuccess();
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('accountsUpdated'));
+      }
       onClose();
     } catch (err) {
       setError('Nie udało się dodać wpłaty. Spróbuj ponownie później.');

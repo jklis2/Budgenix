@@ -122,9 +122,9 @@ export const getTransactions = async (filters?: TransactionFilters): Promise<Tra
     const params = new URLSearchParams();
     if (filters.categoryId) params.append('categoryId', filters.categoryId);
     if (filters.accountId) params.append('accountId', filters.accountId);
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters.dateTo) params.append('dateTo', filters.dateTo);
-    if (filters.search) params.append('search', filters.search);
+    // Nazwy parametrów daty muszą być zgodne z backendem: startDate / endDate
+    if (filters.dateFrom) params.append('startDate', filters.dateFrom);
+    if (filters.dateTo) params.append('endDate', filters.dateTo);
     if (filters.paymentMethod) params.append('paymentMethod', filters.paymentMethod);
     if (filters.isIncome !== undefined) params.append('isIncome', String(filters.isIncome));
     if (filters.limit) params.append('limit', String(filters.limit));
@@ -250,15 +250,14 @@ export const getTransactionStats = async (filters?: TransactionFilters): Promise
     throw new Error('Brak autoryzacji');
   }
 
-  // Budowanie URL z parametrami
+  // Budowanie URL z parametrami (dopasowane do backendu /api/transactions/stats)
   let url = `${API_URL}/stats`;
   if (filters) {
     const params = new URLSearchParams();
     if (filters.categoryId) params.append('categoryId', filters.categoryId);
     if (filters.accountId) params.append('accountId', filters.accountId);
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters.dateTo) params.append('dateTo', filters.dateTo);
-    if (filters.isIncome !== undefined) params.append('isIncome', filters.isIncome.toString());
+    if (filters.dateFrom) params.append('startDate', filters.dateFrom);
+    if (filters.dateTo) params.append('endDate', filters.dateTo);
 
     const queryString = params.toString();
     if (queryString) {
@@ -275,10 +274,40 @@ export const getTransactionStats = async (filters?: TransactionFilters): Promise
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || 'Wystąpił błąd podczas pobierania statystyk transakcji');
+    throw new Error(errorData.error || errorData.message || 'Wystąpił błąd podczas pobierania statystyk transakcji');
   }
 
-  return await response.json();
+  // Backend zwraca strukturę: { overview: { totalIncome, totalExpense, balance, ... }, categoryStats, timeStats }
+  const data = await response.json();
+  const overview = data.overview || {};
+
+  const stats: TransactionStats = {
+    totalIncome: overview.totalIncome ?? 0,
+    totalExpense: overview.totalExpense ?? 0,
+    balance: overview.balance ?? (overview.totalIncome ?? 0) - (overview.totalExpense ?? 0),
+    incomeChange: overview.incomeChange,
+    expenseChange: overview.expenseChange,
+    balanceChange: overview.balanceChange,
+    topExpenseCategories: data.topExpenseCategories || data.categoryStats?.filter((c: any) => c.isIncome === false)?.map((c: any) => ({
+      id: c.categoryId || c.id,
+      name: c.name,
+      amount: c.totalAmount ?? c.amount ?? 0,
+      percentage: 0,
+    })),
+    topIncomeCategories: data.topIncomeCategories || data.categoryStats?.filter((c: any) => c.isIncome === true)?.map((c: any) => ({
+      id: c.categoryId || c.id,
+      name: c.name,
+      amount: c.totalAmount ?? c.amount ?? 0,
+      percentage: 0,
+    })),
+    timeStats: data.timeStats?.map((t: any) => ({
+      period: t.timePeriod ?? t.period,
+      income: t.income ?? 0,
+      expense: t.expense ?? 0,
+    })),
+  };
+
+  return stats;
 };
 
 // Pobieranie wszystkich kategorii
