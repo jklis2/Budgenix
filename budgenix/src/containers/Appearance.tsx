@@ -5,7 +5,24 @@ export default function Appearance() {
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
       <h2 className="text-lg font-semibold text-gray-800 mb-6">Ustawienia wyglądu</h2>
       
-      <div className="space-y-6">
+      {/* Information Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="text-sm font-medium text-blue-800">
+              Zmiany związane z wyglądem będą dostępne wkrótce.
+            </p>
+            <p className="text-xs text-blue-700 mt-1">
+              Pracujemy nad implementacją motywów i personalizacji interfejsu.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="space-y-6 opacity-50 pointer-events-none">
         <div>
           <h3 className="text-md font-medium text-gray-700 mb-4">Motyw</h3>
           
@@ -89,7 +106,7 @@ export default function Appearance() {
         </div>
         
         <div className="pt-4">
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+          <button disabled className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors cursor-not-allowed">
             Zapisz zmiany
           </button>
         </div>

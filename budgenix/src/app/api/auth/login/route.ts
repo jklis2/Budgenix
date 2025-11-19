@@ -3,11 +3,23 @@ import prisma from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import sendEmail from "@/lib/sendEmail";
+import { registerOrUpdateDevice } from "@/lib/deviceManager";
 
 export async function POST(req: Request) {
   const { email, password, rememberMe } = await req.json();
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ 
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      password: true,
+      isActive: true,
+      failedAttempts: true,
+      lastFailedAttempt: true,
+      twoFactorEnabled: true
+    }
+  });
   if (!user) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   
   // Check if account is locked due to too many failed attempts
@@ -57,8 +69,8 @@ export async function POST(req: Request) {
     }
   });
 
-  // Generowanie kodu 2FA jeśli opcja "Remember Me" nie jest zaznaczona
-  if (!rememberMe) {
+  // Generowanie kodu 2FA jeśli 2FA jest włączone i opcja "Remember Me" nie jest zaznaczona
+  if (!rememberMe && user.twoFactorEnabled) {
     const twoFACode = Math.floor(100000 + Math.random() * 900000).toString();
     const twoFAExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 min ważności
 
@@ -81,6 +93,9 @@ export async function POST(req: Request) {
     process.env.JWT_SECRET!, 
     { expiresIn: "30d" }
   );
+
+  // Register or update device
+  await registerOrUpdateDevice(user.id, req);
 
   return NextResponse.json({ token, message: "Logged in successfully" });
 }

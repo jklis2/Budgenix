@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
+import { registerOrUpdateDevice } from "@/lib/deviceManager";
 
 export async function POST(req: Request) {
   const { email, code } = await req.json();
@@ -63,6 +64,9 @@ export async function POST(req: Request) {
     process.env.JWT_SECRET!, 
     { expiresIn: "30d" }
   );
+
+  // Register or update device
+  await registerOrUpdateDevice(user.id, req);
 
   return NextResponse.json({ token, message: "Logged in successfully" });
 }
