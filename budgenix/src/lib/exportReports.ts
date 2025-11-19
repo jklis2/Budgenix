@@ -265,10 +265,13 @@ export const exportToPDF = async (data: ReportData) => {
   }
 
   try {
-    // @ts-expect-error - dynamiczny import bez typów
     const pdfMakeModule = await import('pdfmake/build/pdfmake');
-    // @ts-expect-error - dynamiczny import bez typów
-    const pdfFontsModule = await import('pdfmake/build/vfs_fonts');
+    type PdfFontsModule = {
+      pdfMake?: { vfs: Record<string, string> };
+      vfs?: Record<string, string>;
+      default?: PdfFontsModule;
+    };
+    const pdfFontsModule: PdfFontsModule = await import('pdfmake/build/vfs_fonts');
     
     const pdfMake = pdfMakeModule.default || pdfMakeModule;
     const pdfFonts = pdfFontsModule.default || pdfFontsModule;
@@ -277,7 +280,11 @@ export const exportToPDF = async (data: ReportData) => {
       throw new Error('pdfMake nie został załadowany poprawnie');
     }
     
-    pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
+    const fontVfs = pdfFonts.pdfMake?.vfs ?? pdfFonts.vfs;
+    if (!fontVfs) {
+      throw new Error('Brak danych fontów PDF (vfs)');
+    }
+    pdfMake.vfs = fontVfs;
 
     const primaryColor = '#6366f1';
     

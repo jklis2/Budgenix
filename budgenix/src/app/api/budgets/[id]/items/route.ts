@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from "@/lib/prisma";
 
 // GET /api/budgets/[id]/items - Get all items for a specific budget
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem
-    const { id } = await Promise.resolve(params);
+    const { id } = await params;
 
     // Check if budget exists
     const budget = await prisma.budget.findUnique({
@@ -32,10 +32,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST /api/budgets/[id]/items - Create a new budget item
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem
-    const { id } = await Promise.resolve(params);
+    const { id } = await params;
     const body = await request.json();
     const { allocatedAmount, categoryId }: {
       allocatedAmount: number;

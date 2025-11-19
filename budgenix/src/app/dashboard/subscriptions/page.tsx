@@ -60,7 +60,9 @@ export default function Subscriptions() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [processingPayments, setProcessingPayments] = useState(false);
+
   const [paymentResults, setPaymentResults] = useState<{
     processed: number;
     total: number;
@@ -82,6 +84,7 @@ export default function Subscriptions() {
       available?: number;
     }>;
   } | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
 
   // Fetch subscriptions from API
@@ -137,6 +140,7 @@ export default function Subscriptions() {
   }, []);
 
   // Process subscription payments
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const processSubscriptionPayments = async () => {
     setProcessingPayments(true);
     setPaymentResults(null);

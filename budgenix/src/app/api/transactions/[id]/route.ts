@@ -19,10 +19,10 @@ interface TransactionUpdateData {
 // GET /api/transactions/[id] - Pobieranie pojedynczej transakcji
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
 
     // Weryfikacja tokenu JWT
     const token = request.headers.get('authorization')?.split(' ')[1];
@@ -78,10 +78,10 @@ export async function GET(
 // PUT /api/transactions/[id] - Aktualizacja transakcji
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
 
     // Weryfikacja tokenu JWT
     const token = request.headers.get('authorization')?.split(' ')[1];
@@ -241,10 +241,10 @@ export async function PUT(
 // DELETE /api/transactions/[id] - Usuwanie transakcji
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
 
     // Weryfikacja tokenu JWT
     const token = request.headers.get('authorization')?.split(' ')[1];

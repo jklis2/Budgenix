@@ -99,6 +99,22 @@ export interface TransactionStats {
   }>;
 }
 
+interface TransactionCategoryStatBackend {
+  id?: string;
+  categoryId?: string;
+  name: string;
+  amount?: number;
+  totalAmount?: number;
+  isIncome?: boolean;
+}
+
+interface TransactionTimeStatBackend {
+  period?: string;
+  timePeriod?: string;
+  income?: number;
+  expense?: number;
+}
+
 export interface TransactionsResponse {
   transactions: Transaction[];
   totalCount: number;
@@ -288,19 +304,19 @@ export const getTransactionStats = async (filters?: TransactionFilters): Promise
     incomeChange: overview.incomeChange,
     expenseChange: overview.expenseChange,
     balanceChange: overview.balanceChange,
-    topExpenseCategories: data.topExpenseCategories || data.categoryStats?.filter((c: any) => c.isIncome === false)?.map((c: any) => ({
+    topExpenseCategories: data.topExpenseCategories || data.categoryStats?.filter((c: TransactionCategoryStatBackend) => c.isIncome === false)?.map((c: TransactionCategoryStatBackend) => ({
       id: c.categoryId || c.id,
       name: c.name,
       amount: c.totalAmount ?? c.amount ?? 0,
       percentage: 0,
     })),
-    topIncomeCategories: data.topIncomeCategories || data.categoryStats?.filter((c: any) => c.isIncome === true)?.map((c: any) => ({
+    topIncomeCategories: data.topIncomeCategories || data.categoryStats?.filter((c: TransactionCategoryStatBackend) => c.isIncome === true)?.map((c: TransactionCategoryStatBackend) => ({
       id: c.categoryId || c.id,
       name: c.name,
       amount: c.totalAmount ?? c.amount ?? 0,
       percentage: 0,
     })),
-    timeStats: data.timeStats?.map((t: any) => ({
+    timeStats: data.timeStats?.map((t: TransactionTimeStatBackend) => ({
       period: t.timePeriod ?? t.period,
       income: t.income ?? 0,
       expense: t.expense ?? 0,

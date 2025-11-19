@@ -49,7 +49,7 @@ interface AccountWithTransactions extends Omit<DbAccount, 'isDefault'> {
 // GET a specific account by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -57,7 +57,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const accountId = params.id;
+    const { id: accountId } = await params;
     
     // Get account with raw SQL
     const results = await prisma.$queryRaw<(DbAccount & {
@@ -131,7 +131,7 @@ export async function GET(
 // PUT - Update an account
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -139,7 +139,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const accountId = params.id;
+    const { id: accountId } = await params;
     const { name, balance, accountType, currency, isDefault } = await request.json();
 
     // Validation
@@ -209,7 +209,7 @@ export async function PUT(
 // DELETE - Delete an account
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -217,7 +217,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const accountId = params.id;
+    const { id: accountId } = await params;
 
     // Check if account exists and belongs to the user
     const accounts = await prisma.$queryRaw<DbAccount[]>`

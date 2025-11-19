@@ -127,6 +127,8 @@ export default function SavingsGoals() {
     }, 500); // Dodajemy małe opóźnienie, aby upewnić się, że dane są zaktualizowane w bazie
   };
   
+  void handleSuccess;
+  
   // Sort goals
   const sortedGoals = [...savingsGoals].sort((a, b) => {
     if (sortBy === 'progress') {

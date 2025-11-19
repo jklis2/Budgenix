@@ -23,7 +23,7 @@ const getUserIdFromToken = (request: NextRequest) => {
 // GET a specific subscription by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -31,8 +31,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const subscriptionId = params.id;
-    
+    const { id: subscriptionId } = await params;
+
     // Get subscription
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -71,7 +71,7 @@ export async function GET(
 // PUT - Update a subscription
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -79,7 +79,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const subscriptionId = params.id;
+    const { id: subscriptionId } = await params;
     const { name, amount, cycle, nextPayment, category, logo, color, active } = await request.json();
 
     // Validation
@@ -154,7 +154,7 @@ export async function PUT(
 // DELETE - Delete a subscription
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -162,7 +162,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const subscriptionId = params.id;
+    const { id: subscriptionId } = await params;
 
     // Check if subscription exists and belongs to the user
     const existingSubscription = await prisma.subscription.findUnique({

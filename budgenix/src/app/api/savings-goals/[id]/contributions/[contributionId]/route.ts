@@ -5,11 +5,11 @@ import * as savingsGoalService from '@/services/savingsGoalService';
 // Remove a contribution from a savings goal
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; contributionId: string } }
+  { params }: { params: Promise<{ id: string; contributionId: string }> }
 ) {
   // W Next.js App Router, musimy użyć await Promise.resolve() dla params
   // Jest to zalecane rozwiązanie dla najnowszych wersji Next.js
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   const goalId = resolvedParams.id;
   const contributionId = resolvedParams.contributionId;
   

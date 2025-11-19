@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from "@/lib/prisma";
 
 // GET /api/budgets/[id] - Get a specific budget
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem
-    const { id } = await Promise.resolve(params);
+    const { id } = await params;
 
     const budget = await prisma.budget.findUnique({
       where: { id },
@@ -30,10 +30,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/budgets/[id] - Update a budget
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem
-    const { id } = await Promise.resolve(params);
+    const { id } = await params;
     const body = await request.json();
     const { name, startDate, endDate, totalAmount, isActive }: {
       name?: string;
@@ -79,10 +79,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/budgets/[id] - Delete a budget
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem
-    const { id } = await Promise.resolve(params);
+    const { id } = await params;
 
     // Check if budget exists
     const existingBudget = await prisma.budget.findUnique({

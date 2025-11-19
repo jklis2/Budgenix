@@ -1,10 +1,11 @@
 import React from 'react';
-import { Transaction, formatCurrency, formatDate } from '@/constants/transactionsData';
+import { formatCurrency, formatDate } from '@/constants/transactionsData';
+import { Transaction } from '@/lib/services/transactionService';
 
 interface TransactionListItemProps {
   transaction: Transaction;
   isSelected: boolean;
-  onSelect: (id: number) => void;
+  onSelect: (id: string) => void;
 }
 
 const TransactionListItem: React.FC<TransactionListItemProps> = ({
@@ -23,7 +24,7 @@ const TransactionListItem: React.FC<TransactionListItemProps> = ({
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          {transaction.category}
+          {transaction.category?.name ?? 'Brak kategorii'}
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

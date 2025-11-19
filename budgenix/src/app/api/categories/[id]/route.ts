@@ -23,15 +23,14 @@ const getUserIdFromToken = (request: NextRequest) => {
 // GET a specific category by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const categoryId = params.id;
+    const { id: categoryId } = await params;
     
     // Get category
     const category = await prisma.category.findUnique({
@@ -67,7 +66,7 @@ export async function GET(
 // PUT - Update a category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -75,7 +74,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const categoryId = params.id;
+    const { id: categoryId } = await params;
     const { name, icon, color, isIncome } = await request.json();
 
     // Validation
@@ -130,7 +129,7 @@ export async function PUT(
 // DELETE - Delete a category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = getUserIdFromToken(request);
@@ -138,7 +137,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const categoryId = params.id;
+    const { id: categoryId } = await params;
 
     // Check if category exists and belongs to the user
     const existingCategory = await prisma.category.findUnique({

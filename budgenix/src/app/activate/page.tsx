@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function ActivatePage() {
+function ActivateContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   
@@ -92,5 +92,13 @@ export default function ActivatePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ActivatePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Ładowanie...</div>}>
+      <ActivateContent />
+    </Suspense>
   );
 }

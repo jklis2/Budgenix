@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 // GET /api/budgets/[id]/items/[itemId] - Get a specific budget item
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem
@@ -41,7 +41,7 @@ export async function GET(
 // PUT /api/budgets/[id]/items/[itemId] - Update a budget item
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem
@@ -117,7 +117,7 @@ export async function PUT(
 // DELETE /api/budgets/[id]/items/[itemId] - Delete a budget item
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
     // W Next.js 14+ parametry dynamicznych tras powinny być oczekiwane przed użyciem

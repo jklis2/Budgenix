@@ -4,8 +4,9 @@ import { UpdateSavingsGoalDto } from '@/services/savingsGoalService';
 
 // GET /api/savings-goals/[id]
 // Get a single savings goal by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Get the savings goal
-    const savingsGoal = await savingsGoalService.getSavingsGoal(params.id, userId);
+    const savingsGoal = await savingsGoalService.getSavingsGoal(id, userId);
     
     if (!savingsGoal) {
       return NextResponse.json({ error: 'Savings goal not found' }, { status: 404 });
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     
     return NextResponse.json(savingsGoal);
   } catch (error) {
-    console.error(`Error in GET /api/savings-goals/${params.id}:`, error);
+    console.error('Error in GET /api/savings-goals/[id]:', error);
     return NextResponse.json(
       { error: 'Failed to fetch savings goal' },
       { status: 500 }
@@ -33,8 +34,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 // PUT /api/savings-goals/[id]
 // Update a savings goal
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     // Parse the request body
     const body = await request.json();
     
@@ -55,14 +57,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // Update the savings goal
     const updatedGoal = await savingsGoalService.updateSavingsGoal(
-      params.id,
+      id,
       updateData,
       body.userId
     );
 
     return NextResponse.json(updatedGoal);
   } catch (error) {
-    console.error(`Error in PUT /api/savings-goals/${params.id}:`, error);
+    console.error('Error in PUT /api/savings-goals/[id]:', error);
     return NextResponse.json(
       { error: 'Failed to update savings goal' },
       { status: 500 }
@@ -72,8 +74,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 // DELETE /api/savings-goals/[id]
 // Delete a savings goal
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
@@ -83,11 +86,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Delete the savings goal
-    await savingsGoalService.deleteSavingsGoal(params.id, userId);
+    await savingsGoalService.deleteSavingsGoal(id, userId);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`Error in DELETE /api/savings-goals/${params.id}:`, error);
+    console.error('Error in DELETE /api/savings-goals/[id]:', error);
     return NextResponse.json(
       { error: 'Failed to delete savings goal' },
       { status: 500 }

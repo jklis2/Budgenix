@@ -6,11 +6,11 @@ import crypto from 'crypto';
 // Add a contribution to a savings goal
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get the goalId from the URL parameters
-    const goalId = params.id;
+    const { id: goalId } = await params;
 
     // Parse request body
     let body;
