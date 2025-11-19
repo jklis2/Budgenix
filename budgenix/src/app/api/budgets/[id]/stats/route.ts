@@ -39,7 +39,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           lte: lastDayOfMonth
         },
         category: {
-          isIncome: false // Only include expenses
+          isIncome: false, // Only include expenses
+          NOT: {
+            name: 'Oszczędności' // Exclude savings contributions
+          }
         }
       },
       include: {

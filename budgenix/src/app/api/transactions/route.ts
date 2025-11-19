@@ -147,7 +147,10 @@ export async function GET(request: NextRequest) {
       where: {
         ...filters,
         category: {
-          isIncome: false
+          isIncome: false,
+          NOT: {
+            name: 'Oszczędności'
+          }
         }
       },
       _sum: {

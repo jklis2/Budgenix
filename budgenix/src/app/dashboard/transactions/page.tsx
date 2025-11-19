@@ -91,8 +91,9 @@ export default function Transactions() {
           .filter(tx => tx.category?.isIncome === true)
           .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
+        // Wydatki: wszystkie kategorie wydatkowe BEZ "Oszczędności" (wpłaty na cele oszczędnościowe)
         const expenses = visibleTransactions
-          .filter(tx => tx.category?.isIncome === false)
+          .filter(tx => tx.category?.isIncome === false && tx.category?.name !== 'Oszczędności')
           .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
         const balance = income - expenses;

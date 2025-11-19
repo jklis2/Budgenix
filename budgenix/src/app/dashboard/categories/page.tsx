@@ -127,8 +127,10 @@ export default function Categories() {
         console.log(`Transakcje dla kategorii ${category.name}:`, categoryTransactions.length);
         
         // Obliczamy sumę faktycznych wydatków - POPRAWKA: filtrujemy po category.isIncome dla spójności
+        // WYKLUCZAMY kategorię "Oszczędności" (wpłaty na cele oszczędnościowe)
         const expenseTransactions = categoryTransactions.filter(t => 
-          t.category?.isIncome === false || (!t.category && t.amount !== undefined)
+          (t.category?.isIncome === false && t.category?.name !== 'Oszczędności') || 
+          (!t.category && t.amount !== undefined)
         );
         
         // Sumujemy wartości bezwzględne transakcji wydatkowych

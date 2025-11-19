@@ -90,12 +90,15 @@ export async function GET(request: NextRequest) {
         },
         _count: true
       }),
-      // Całkowity wydatek
+      // Całkowity wydatek (bez kategorii "Oszczędności" - wpłaty na cele oszczędnościowe)
       prisma.transaction.aggregate({
         where: {
           ...filters,
           category: {
-            isIncome: false
+            isIncome: false,
+            NOT: {
+              name: 'Oszczędności'
+            }
           }
         },
         _sum: {
@@ -234,7 +237,7 @@ export async function GET(request: NextRequest) {
       SELECT 
         FORMAT(date, '${dateFormat}') as timePeriod,
         SUM(CASE WHEN c.isIncome = 1 THEN amount ELSE 0 END) as income,
-        SUM(CASE WHEN c.isIncome = 0 THEN amount ELSE 0 END) as expense,
+        SUM(CASE WHEN c.isIncome = 0 AND c.name != 'Oszczędności' THEN amount ELSE 0 END) as expense,
         COUNT(*) as count
       FROM [Transaction] t
       JOIN [Category] c ON t.categoryId = c.id
