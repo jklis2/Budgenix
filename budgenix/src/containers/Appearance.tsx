@@ -70,44 +70,6 @@ export default function Appearance() {
         </div>
         
         <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-md font-medium text-gray-700 mb-4">Układ dashboardu</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border border-indigo-500 rounded-lg p-4 bg-white relative">
-              <div className="absolute top-2 right-2">
-                <div className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <div className="h-24 bg-gray-100 rounded mb-3 overflow-hidden flex">
-                <div className="w-1/5 h-full bg-gray-200 border-r border-gray-300"></div>
-                <div className="flex-1 p-2">
-                  <div className="h-3 w-1/2 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-10 bg-white rounded border border-gray-300 mb-2"></div>
-                </div>
-              </div>
-              <p className="text-sm font-medium text-center">Standardowy</p>
-            </div>
-            
-            <div className="border border-gray-200 rounded-lg p-4 bg-white hover:border-indigo-500 transition-colors">
-              <div className="h-24 bg-gray-100 rounded mb-3 overflow-hidden flex">
-                <div className="w-1/5 h-full bg-gray-200 border-r border-gray-300"></div>
-                <div className="flex-1 p-2 flex flex-col">
-                  <div className="h-3 w-1/2 bg-gray-300 rounded mb-2"></div>
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <div className="bg-white rounded border border-gray-300"></div>
-                    <div className="bg-white rounded border border-gray-300"></div>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm font-medium text-center">Kompaktowy</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="border-t border-gray-200 pt-6">
           <h3 className="text-md font-medium text-gray-700 mb-4">Czcionka</h3>
           
           <div>

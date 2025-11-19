@@ -3,7 +3,6 @@ import Notifications from '@/containers/Notifications';
 import Profile from '@/containers/Profile';
 import Security from '@/containers/Security';
 import Appearance from '@/containers/Appearance';
-import Preferences from '@/containers/Preferences';
 import { useState } from 'react';
 
 export default function Settings() {
@@ -25,10 +24,6 @@ export default function Settings() {
     return <Appearance />;  
   };
 
-  const renderPreferencesSettings = () => {
-    return <Preferences />;
-  };
-
   // Funkcja do renderowania odpowiedniej zakładki
   const renderTabContent = () => {
     switch(activeTab) {
@@ -40,8 +35,6 @@ export default function Settings() {
         return renderSecuritySettings();
       case 'appearance':
         return renderAppearanceSettings();
-      case 'preferences':
-        return renderPreferencesSettings();
       default:
         return renderProfileSettings();
     }
@@ -81,14 +74,7 @@ export default function Settings() {
         >
           Wygląd
         </button>
-        <button 
-          className={`px-4 py-2 font-medium text-sm ${activeTab === 'preferences' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-          onClick={() => setActiveTab('preferences')}
-        >
-          Preferencje
-        </button>
       </div>
-      
       {/* Tab content */}
       <div>
         {renderTabContent()}

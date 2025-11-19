@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
+import { getUserProfile, User } from "@/services/userService";
 
 type UserData = {
   id: string;
@@ -18,13 +19,14 @@ export default function MainNavbar({
   isMobile?: boolean;
 }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Function to get user email from JWT token
-    const getUserFromToken = () => {
+    // Function to get user data from JWT token and fetch profile
+    const getUserFromToken = async () => {
       try {
         const token = localStorage.getItem("token");
         if (token) {
@@ -34,13 +36,24 @@ export default function MainNavbar({
           // Set the email directly from the token
           if (decoded.email) {
             setUserEmail(decoded.email);
+            
+            // Fetch full user profile
+            try {
+              const profile = await getUserProfile(decoded.id);
+              setUserProfile(profile);
+            } catch (error) {
+              console.error("Error fetching user profile:", error);
+              // If profile fetch fails, still show email
+            }
           }
         } else {
           setUserEmail(null);
+          setUserProfile(null);
         }
       } catch (error) {
         console.error("Error decoding token:", error);
         setUserEmail(null);
+        setUserProfile(null);
       }
     };
 
@@ -52,7 +65,13 @@ export default function MainNavbar({
       getUserFromToken();
     };
 
+    // Set up event listener for profile updates
+    const handleProfileUpdate = () => {
+      getUserFromToken();
+    };
+
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("profileUpdated", handleProfileUpdate);
     
     // Add click event listener to close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
@@ -66,6 +85,7 @@ export default function MainNavbar({
     // Clean up event listeners
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
@@ -75,9 +95,28 @@ export default function MainNavbar({
     localStorage.removeItem("token");
     // Update state
     setUserEmail(null);
+    setUserProfile(null);
     setDropdownOpen(false);
     // Redirect to home page
     router.push("/");
+  };
+
+  const getDisplayName = () => {
+    return userProfile?.fullName || userEmail || "User";
+  };
+
+  const getAvatarInitial = () => {
+    if (userProfile?.fullName) {
+      return userProfile.fullName.charAt(0).toUpperCase();
+    }
+    if (userEmail) {
+      return userEmail.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
+  const getAvatarColor = () => {
+    return userProfile?.avatarColor || "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
   };
 
   return (
@@ -128,13 +167,16 @@ export default function MainNavbar({
         
         {userEmail && (
           <div className="flex items-center gap-3 relative" ref={dropdownRef}>
-            <span className="text-sm font-medium text-gray-700 hidden md:block">{userEmail}</span>
+            <span className="text-sm font-medium text-gray-700 hidden md:block">{getDisplayName()}</span>
             <button 
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center text-white font-medium shadow-sm">
-                {userEmail.charAt(0).toUpperCase()}
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium shadow-sm"
+                style={{ background: getAvatarColor() }}
+              >
+                {getAvatarInitial()}
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hidden md:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -144,8 +186,8 @@ export default function MainNavbar({
             {dropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-10 text-gray-700 border border-gray-100">
                 <div className="px-4 py-2 border-b border-gray-100">
-                  <div className="text-sm font-medium text-gray-900">{userEmail}</div>
-                  <div className="text-xs text-gray-500">Konto użytkownika</div>
+                  <div className="text-sm font-medium text-gray-900">{getDisplayName()}</div>
+                  <div className="text-xs text-gray-500">{userEmail}</div>
                 </div>
                 
                 <button
