@@ -2,20 +2,20 @@ import React from 'react';
 
 export default function Appearance() {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-      <h2 className="text-lg font-semibold text-gray-800 mb-6">Ustawienia wyglądu</h2>
+    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
+      <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">Ustawienia wyglądu</h2>
       
       {/* Information Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-start">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+        <div className="flex items-start gap-2 sm:gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <p className="text-sm font-medium text-blue-800">
+            <p className="text-xs sm:text-sm font-medium text-blue-800">
               Zmiany związane z wyglądem będą dostępne wkrótce.
             </p>
-            <p className="text-xs text-blue-700 mt-1">
+            <p className="text-[10px] sm:text-xs text-blue-700 mt-1">
               Pracujemy nad implementacją motywów i personalizacji interfejsu.
             </p>
           </div>
@@ -24,10 +24,10 @@ export default function Appearance() {
       
       <div className="space-y-6 opacity-50 pointer-events-none">
         <div>
-          <h3 className="text-md font-medium text-gray-700 mb-4">Motyw</h3>
+          <h3 className="text-sm sm:text-md font-medium text-gray-700 mb-3 sm:mb-4">Motyw</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border border-indigo-500 rounded-lg p-4 bg-white relative">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="border border-indigo-500 rounded-lg p-3 sm:p-4 bg-white relative">
               <div className="absolute top-2 right-2">
                 <div className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -43,10 +43,10 @@ export default function Appearance() {
                   <div className="h-3 w-1/3 bg-gray-300 rounded"></div>
                 </div>
               </div>
-              <p className="text-sm font-medium text-center">Jasny</p>
+              <p className="text-xs sm:text-sm font-medium text-center">Jasny</p>
             </div>
             
-            <div className="border border-gray-200 rounded-lg p-4 bg-white hover:border-indigo-500 transition-colors">
+            <div className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-white hover:border-indigo-500 transition-colors">
               <div className="h-24 bg-gray-800 rounded mb-3 overflow-hidden">
                 <div className="h-6 bg-gray-900 border-b border-gray-700"></div>
                 <div className="p-2">
@@ -55,10 +55,10 @@ export default function Appearance() {
                   <div className="h-3 w-1/3 bg-gray-600 rounded"></div>
                 </div>
               </div>
-              <p className="text-sm font-medium text-center">Ciemny</p>
+              <p className="text-xs sm:text-sm font-medium text-center">Ciemny</p>
             </div>
             
-            <div className="border border-gray-200 rounded-lg p-4 bg-white hover:border-indigo-500 transition-colors">
+            <div className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-white hover:border-indigo-500 transition-colors">
               <div className="h-24 bg-gradient-to-r from-indigo-500 to-purple-600 rounded mb-3 overflow-hidden">
                 <div className="h-6 bg-white/10 border-b border-white/20"></div>
                 <div className="p-2">
@@ -67,15 +67,15 @@ export default function Appearance() {
                   <div className="h-3 w-1/3 bg-white/70 rounded"></div>
                 </div>
               </div>
-              <p className="text-sm font-medium text-center">Kolorowy</p>
+              <p className="text-xs sm:text-sm font-medium text-center">Kolorowy</p>
             </div>
           </div>
         </div>
         
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-md font-medium text-gray-700 mb-4">Kolor akcentu</h3>
+        <div className="border-t border-gray-200 pt-4 sm:pt-6">
+          <h3 className="text-sm sm:text-md font-medium text-gray-700 mb-3 sm:mb-4">Kolor akcentu</h3>
           
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <button className="w-8 h-8 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-indigo-500"></button>
             <button className="w-8 h-8 rounded-full bg-blue-500 hover:ring-2 hover:ring-offset-2 hover:ring-blue-500 transition-all"></button>
             <button className="w-8 h-8 rounded-full bg-emerald-500 hover:ring-2 hover:ring-offset-2 hover:ring-emerald-500 transition-all"></button>
@@ -86,8 +86,8 @@ export default function Appearance() {
           </div>
         </div>
         
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-md font-medium text-gray-700 mb-4">Czcionka</h3>
+        <div className="border-t border-gray-200 pt-4 sm:pt-6">
+          <h3 className="text-sm sm:text-md font-medium text-gray-700 mb-3 sm:mb-4">Czcionka</h3>
           
           <div>
             <label htmlFor="fontSize" className="block text-sm font-medium text-gray-700 mb-1">

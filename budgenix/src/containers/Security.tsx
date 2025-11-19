@@ -259,22 +259,22 @@ export default function Security() {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-800 mb-6">Ustawienia bezpieczeństwa</h2>
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">Ustawienia bezpieczeństwa</h2>
         
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Password Change Section */}
-          <form onSubmit={handlePasswordChange} className="space-y-4">
-            <h3 className="text-md font-medium text-gray-700 mb-2">Zmiana hasła</h3>
+          <form onSubmit={handlePasswordChange} className="space-y-3 sm:space-y-4">
+            <h3 className="text-sm sm:text-md font-medium text-gray-700 mb-2">Zmiana hasła</h3>
             
             {passwordMessage && (
-              <div className={`p-3 rounded-lg ${passwordMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                <p className="text-sm">{passwordMessage.text}</p>
+              <div className={`p-2.5 sm:p-3 rounded-lg ${passwordMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                <p className="text-xs sm:text-sm">{passwordMessage.text}</p>
               </div>
             )}
             
             <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="currentPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Aktualne hasło
               </label>
               <input
@@ -282,14 +282,14 @@ export default function Security() {
                 id="currentPassword"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="••••••••"
                 required
               />
             </div>
             
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="newPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Nowe hasło
               </label>
               <input
@@ -297,17 +297,17 @@ export default function Security() {
                 id="newPassword"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="••••••••"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                 Hasło powinno zawierać co najmniej 8 znaków, w tym wielkie i małe litery, cyfry oraz znaki specjalne.
               </p>
             </div>
             
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Potwierdź nowe hasło
               </label>
               <input
@@ -315,7 +315,7 @@ export default function Security() {
                 id="confirmPassword"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 placeholder="••••••••"
                 required
               />
@@ -325,7 +325,7 @@ export default function Security() {
               <button 
                 type="submit" 
                 disabled={passwordLoading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {passwordLoading ? 'Zmiana...' : 'Zmień hasło'}
               </button>
@@ -333,13 +333,13 @@ export default function Security() {
           </form>
           
           {/* Two-Factor Authentication Section */}
-          <div className="border-t border-gray-200 pt-6 space-y-4">
-            <h3 className="text-md font-medium text-gray-700 mb-2">Weryfikacja dwuetapowa</h3>
+          <div className="border-t border-gray-200 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+            <h3 className="text-sm sm:text-md font-medium text-gray-700 mb-2">Weryfikacja dwuetapowa</h3>
             
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-800">Weryfikacja dwuetapowa</p>
-                <p className="text-xs text-gray-500">Dodatkowa warstwa zabezpieczeń dla Twojego konta</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-800">Weryfikacja dwuetapowa</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">Dodatkowa warstwa zabezpieczeń dla Twojego konta</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input 
@@ -353,8 +353,8 @@ export default function Security() {
               </label>
             </div>
             
-            <div className="pl-4 border-l-2 border-gray-200">
-              <p className="text-sm text-gray-600">
+            <div className="pl-3 sm:pl-4 border-l-2 border-gray-200">
+              <p className="text-xs sm:text-sm text-gray-600">
                 Weryfikacja dwuetapowa wymaga podania kodu z wiadomości e-mail przy każdym logowaniu.
                 To znacznie zwiększa bezpieczeństwo Twojego konta, nawet jeśli Twoje hasło zostanie przejęte.
               </p>
@@ -362,23 +362,23 @@ export default function Security() {
           </div>
           
           {/* Devices Section */}
-          <div className="border-t border-gray-200 pt-6 space-y-4">
-            <h3 className="text-md font-medium text-gray-700 mb-2">Sesje i urządzenia</h3>
+          <div className="border-t border-gray-200 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+            <h3 className="text-sm sm:text-md font-medium text-gray-700 mb-2">Sesje i urządzenia</h3>
             
             {devicesLoading ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500">Ładowanie urządzeń...</p>
+              <div className="text-center py-3 sm:py-4">
+                <p className="text-xs sm:text-sm text-gray-500">Ładowanie urządzeń...</p>
               </div>
             ) : devices.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500">Brak zarejestrowanych urządzeń</p>
+              <div className="text-center py-3 sm:py-4">
+                <p className="text-xs sm:text-sm text-gray-500">Brak zarejestrowanych urządzeń</p>
               </div>
             ) : (
               devices.map((device, index) => (
-                <div key={device.id} className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-start">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div key={device.id} className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         {index === 0 ? (
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         ) : (
@@ -386,20 +386,20 @@ export default function Security() {
                         )}
                       </svg>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{device.deviceName} - {device.browser}</p>
-                          <p className="text-xs text-gray-500">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">{device.deviceName} - {device.browser}</p>
+                          <p className="text-[10px] sm:text-xs text-gray-500">
                             {device.ipAddress || 'Nieznana lokalizacja'} • {formatDate(device.lastActiveAt)}
                           </p>
                         </div>
                         {index === 0 ? (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Bieżąca</span>
+                          <span className="text-[10px] sm:text-xs bg-green-100 text-green-800 px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Bieżąca</span>
                         ) : (
                           <button 
                             onClick={() => handleDeleteDevice(device.id)}
-                            className="text-xs text-red-600 hover:text-red-800"
+                            className="text-[10px] sm:text-xs text-red-600 hover:text-red-800 whitespace-nowrap"
                           >
                             Wyloguj
                           </button>
@@ -414,7 +414,7 @@ export default function Security() {
             {devices.length > 1 && (
               <button 
                 onClick={handleLogoutAllDevices}
-                className="text-sm text-indigo-600 font-medium hover:text-indigo-700"
+                className="text-xs sm:text-sm text-indigo-600 font-medium hover:text-indigo-700"
               >
                 Wyloguj ze wszystkich urządzeń
               </button>
@@ -425,17 +425,17 @@ export default function Security() {
 
       {/* Verification Modal */}
       {showVerificationModal && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Weryfikacja dwuetapowa</h3>
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Weryfikacja dwuetapowa</h3>
             
             {verificationMessage && (
-              <div className={`p-3 rounded-lg mb-4 ${verificationMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                <p className="text-sm">{verificationMessage.text}</p>
+              <div className={`p-2.5 sm:p-3 rounded-lg mb-3 sm:mb-4 ${verificationMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                <p className="text-xs sm:text-sm">{verificationMessage.text}</p>
               </div>
             )}
             
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
               Wpisz kod weryfikacyjny, który został wysłany na Twój adres email.
             </p>
             
@@ -443,25 +443,25 @@ export default function Security() {
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-3 sm:mb-4"
               placeholder="123456"
               maxLength={6}
             />
             
-            <div className="flex space-x-3">
+            <div className="flex gap-2 sm:gap-3">
               <button
                 onClick={() => {
                   setShowVerificationModal(false);
                   setVerificationCode('');
                   setVerificationMessage(null);
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                className="flex-1 px-3 sm:px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-300 transition-colors"
               >
                 Anuluj
               </button>
               <button
                 onClick={handleVerifyCode}
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                className="flex-1 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-indigo-700 transition-colors"
               >
                 Weryfikuj
               </button>
