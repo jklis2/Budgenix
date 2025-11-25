@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import jwt from "jsonwebtoken";
-import sendEmail from "@/lib/sendEmail";
+import { sendTwoFactorEmail } from "@/lib/sendEmail";
 import { registerOrUpdateDevice } from "@/lib/deviceManager";
 
 export async function POST(req: Request) {
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       data: { twoFACode, twoFAExpiry }
     });
 
-    await sendEmail(user.email, "Your 2FA Code", `Your verification code is: ${twoFACode}`);
+    await sendTwoFactorEmail(user.email, twoFACode);
 
     return NextResponse.json({ message: "2FA code sent to email" });
   }

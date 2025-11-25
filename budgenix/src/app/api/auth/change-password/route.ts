@@ -5,22 +5,63 @@ import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
   try {
-    // Get the token from the Authorization header
+    const body = await req.json();
+    const { token: resetToken, newPassword, currentPassword, confirmNewPassword } = body;
+
+    // Case 1: Reset password with email token (no authentication required)
+    if (resetToken) {
+      if (!newPassword) {
+        return NextResponse.json({ error: "New password is required" }, { status: 400 });
+      }
+
+      if (newPassword.length < 8) {
+        return NextResponse.json({ 
+          error: "Password must be at least 8 characters long" 
+        }, { status: 400 });
+      }
+
+      // Find user by activation token
+      const user = await prisma.user.findFirst({
+        where: { activationToken: resetToken }
+      });
+
+      if (!user) {
+        return NextResponse.json({ 
+          error: "Invalid or expired reset token" 
+        }, { status: 400 });
+      }
+
+      // Hash new password
+      const hashedPassword = await hash(newPassword, 10);
+
+      // Update password and clear token
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          password: hashedPassword,
+          activationToken: null 
+        }
+      });
+
+      return NextResponse.json({ 
+        message: "Password has been reset successfully" 
+      });
+    }
+
+    // Case 2: Change password for logged-in user (requires JWT)
     const authHeader = req.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const token = authHeader.substring(7);
+    const jwtToken = authHeader.substring(7);
     let decoded;
     
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; email: string };
+      decoded = jwt.verify(jwtToken, process.env.JWT_SECRET!) as { id: string; email: string };
     } catch {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
-
-    const { currentPassword, newPassword, confirmNewPassword } = await req.json();
 
     // Validate input
     if (!currentPassword || !newPassword || !confirmNewPassword) {

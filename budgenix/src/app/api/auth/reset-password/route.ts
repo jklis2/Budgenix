@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import sendEmail from "@/lib/sendEmail";
+import { sendPasswordResetEmail } from "@/lib/sendEmail";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
@@ -16,12 +16,7 @@ export async function POST(req: Request) {
     data: { activationToken: resetToken },
   });
 
-  const resetLink = `${process.env.NEXT_PUBLIC_URL}/reset-password?token=${resetToken}`;
-  await sendEmail(
-    email,
-    "Reset Your Password",
-    `Click to reset your password: ${resetLink}`
-  );
+  await sendPasswordResetEmail(email, resetToken);
 
   return NextResponse.json({ message: "Reset link sent" });
 }

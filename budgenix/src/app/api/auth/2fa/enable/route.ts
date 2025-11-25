@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
-import sendEmail from "@/lib/sendEmail";
+import { sendTwoFactorEmail } from "@/lib/sendEmail";
 
 export async function POST(req: Request) {
   try {
@@ -43,11 +43,7 @@ export async function POST(req: Request) {
     });
 
     // Send verification code via email
-    await sendEmail(
-      user.email, 
-      "Enable Two-Factor Authentication", 
-      `Your verification code to enable 2FA is: ${twoFACode}\n\nThis code will expire in 15 minutes.`
-    );
+    await sendTwoFactorEmail(user.email, twoFACode);
 
     return NextResponse.json({ 
       message: "Verification code sent to your email" 

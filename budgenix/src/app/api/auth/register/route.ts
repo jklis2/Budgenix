@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
-import sendEmail from "@/lib/sendEmail";
+import { sendVerificationEmail } from "@/lib/sendEmail";
 
 export async function POST(req: Request) {
   try {
@@ -28,14 +28,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const activationLink = `${process.env.NEXT_PUBLIC_URL}/activate?token=${activationToken}`;
-    
     try {
-      await sendEmail(
-        email,
-        "Activate Your Account",
-        `Click to activate: ${activationLink}`
-      );
+      await sendVerificationEmail(email, activationToken);
       console.log(`Activation email sent to ${email} with token ${activationToken}`);
     } catch (emailError) {
       console.error("Failed to send activation email:", emailError);
