@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AuthInput from "@/components/ui/AuthInput";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 function LoginContent() {
   const [email, setEmail] = useState("");
@@ -50,7 +51,7 @@ function LoginContent() {
 
   const handleLogin = async () => {
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(buildApiUrl("/api/auth/login"), {
         method: "POST",
         body: JSON.stringify({ email, password, rememberMe }),
         headers: { "Content-Type": "application/json" },
@@ -74,7 +75,7 @@ function LoginContent() {
 
   const handle2FAVerify = async () => {
     try {
-      const res = await fetch("/api/auth/verify-2fa", {
+      const res = await fetch(buildApiUrl("/api/auth/verify-2fa"), {
         method: "POST",
         body: JSON.stringify({ email, code }),
         headers: { "Content-Type": "application/json" },

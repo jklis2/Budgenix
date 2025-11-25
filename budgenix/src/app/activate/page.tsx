@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 function ActivateContent() {
   const searchParams = useSearchParams();
@@ -20,7 +21,7 @@ function ActivateContent() {
 
     const activateAccount = async () => {
       try {
-        const response = await fetch("/api/auth/activate", {
+        const response = await fetch(buildApiUrl("/api/auth/activate"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import { Budget, BudgetItem, Category } from '@prisma/client';
+import { buildApiUrl } from '../lib/utils/apiUrl';
 
 // Types for Budget with related items
 export interface BudgetWithItems extends Budget {
@@ -45,7 +46,7 @@ export async function getBudgets(userId: string, isActive?: boolean): Promise<Bu
       queryParams.append('isActive', isActive.toString());
     }
     
-    const response = await fetch(`/api/budgets?${queryParams.toString()}`, {
+    const response = await fetch(buildApiUrl(`/api/budgets?${queryParams.toString()}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -69,7 +70,7 @@ export async function getBudgets(userId: string, isActive?: boolean): Promise<Bu
  */
 export async function getBudget(id: string): Promise<BudgetWithItems> {
   try {
-    const response = await fetch(`/api/budgets/${id}`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${id}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -93,7 +94,7 @@ export async function getBudget(id: string): Promise<BudgetWithItems> {
  */
 export async function getActiveBudget(userId: string): Promise<BudgetWithItems> {
   try {
-    const response = await fetch(`/api/budgets/active?userId=${userId}`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/active?userId=${userId}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -124,7 +125,7 @@ export async function createBudget(budgetData: {
   budgetItems?: { allocatedAmount: number; categoryId: string }[];
 }): Promise<BudgetWithItems> {
   try {
-    const response = await fetch('/api/budgets', {
+    const response = await fetch(buildApiUrl('/api/budgets'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -155,7 +156,7 @@ export async function updateBudget(id: string, budgetData: {
   isActive?: boolean;
 }): Promise<BudgetWithItems> {
   try {
-    const response = await fetch(`/api/budgets/${id}`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${id}`), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -180,7 +181,7 @@ export async function updateBudget(id: string, budgetData: {
  */
 export async function deleteBudget(id: string): Promise<{ message: string }> {
   try {
-    const response = await fetch(`/api/budgets/${id}`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${id}`), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'
@@ -204,7 +205,7 @@ export async function deleteBudget(id: string): Promise<{ message: string }> {
  */
 export async function getBudgetStats(id: string): Promise<BudgetStats> {
   try {
-    const response = await fetch(`/api/budgets/${id}/stats`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${id}/stats`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -228,7 +229,7 @@ export async function getBudgetStats(id: string): Promise<BudgetStats> {
  */
 export async function getBudgetItems(budgetId: string): Promise<(BudgetItem & { category: Category })[]> {
   try {
-    const response = await fetch(`/api/budgets/${budgetId}/items`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${budgetId}/items`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -255,7 +256,7 @@ export async function createBudgetItem(budgetId: string, itemData: {
   categoryId: string;
 }): Promise<BudgetItem & { category: Category }> {
   try {
-    const response = await fetch(`/api/budgets/${budgetId}/items`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${budgetId}/items`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -283,7 +284,7 @@ export async function updateBudgetItem(budgetId: string, itemId: string, itemDat
   categoryId?: string;
 }): Promise<BudgetItem & { category: Category }> {
   try {
-    const response = await fetch(`/api/budgets/${budgetId}/items/${itemId}`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${budgetId}/items/${itemId}`), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -308,7 +309,7 @@ export async function updateBudgetItem(budgetId: string, itemId: string, itemDat
  */
 export async function deleteBudgetItem(budgetId: string, itemId: string): Promise<{ message: string }> {
   try {
-    const response = await fetch(`/api/budgets/${budgetId}/items/${itemId}`, {
+    const response = await fetch(buildApiUrl(`/api/budgets/${budgetId}/items/${itemId}`), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'

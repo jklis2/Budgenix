@@ -1,5 +1,6 @@
 import { Account } from '@prisma/client';
 import { getToken } from '@/lib/services/authService';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 // Get all accounts for a user
 export const getAccounts = async (userId: string): Promise<Account[]> => {
@@ -9,7 +10,7 @@ export const getAccounts = async (userId: string): Promise<Account[]> => {
     // Jeśli mamy token autoryzacyjny, próbujemy pobrać dane z API
     if (token) {
       try {
-        const response = await fetch('/api/accounts', {
+        const response = await fetch(buildApiUrl('/api/accounts'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }

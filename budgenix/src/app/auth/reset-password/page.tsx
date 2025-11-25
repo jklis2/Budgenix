@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AuthInput from "@/components/ui/AuthInput";
 import Link from "next/link";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -26,7 +27,7 @@ function ResetPasswordContent() {
     }
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(buildApiUrl("/api/auth/reset-password"), {
         method: "POST",
         body: JSON.stringify({ email }),
         headers: { "Content-Type": "application/json" },
@@ -66,7 +67,7 @@ function ResetPasswordContent() {
     }
 
     try {
-      const res = await fetch("/api/auth/change-password", {
+      const res = await fetch(buildApiUrl("/api/auth/change-password"), {
         method: "POST",
         body: JSON.stringify({ token, newPassword }),
         headers: { "Content-Type": "application/json" },

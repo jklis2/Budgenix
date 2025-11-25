@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 import { AccountCard } from "@/components/ui/AccountCard";
 import { AccountDetailsModal } from "@/components/ui/AccountDetailsModal";
 import { Account } from "@/constants/accountsData";
@@ -30,7 +31,7 @@ export default function Accounts() {
         return;
       }
 
-      const response = await fetch("/api/accounts", {
+      const response = await fetch(buildApiUrl("/api/accounts"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

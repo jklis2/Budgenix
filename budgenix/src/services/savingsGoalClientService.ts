@@ -1,4 +1,5 @@
 import { SavingsGoal } from '@prisma/client';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 export interface SavingsGoalWithContributions extends SavingsGoal {
   contributions: SavingsGoalContribution[];
@@ -53,7 +54,7 @@ export interface CreateContributionDto {
 // Get all savings goals for a user
 export const getSavingsGoals = async (userId: string, isCompleted?: boolean): Promise<SavingsGoalWithContributions[]> => {
   try {
-    let url = `/api/savings-goals?userId=${userId}`;
+    let url = buildApiUrl(`/api/savings-goals?userId=${userId}`);
     if (isCompleted !== undefined) {
       url += `&isCompleted=${isCompleted}`;
     }
@@ -74,7 +75,7 @@ export const getSavingsGoals = async (userId: string, isCompleted?: boolean): Pr
 // Get a single savings goal by ID
 export const getSavingsGoal = async (goalId: string, userId: string): Promise<SavingsGoalWithContributions> => {
   try {
-    const response = await fetch(`/api/savings-goals/${goalId}?userId=${userId}`);
+    const response = await fetch(buildApiUrl(`/api/savings-goals/${goalId}?userId=${userId}`));
     
     if (!response.ok) {
       throw new Error('Failed to fetch savings goal');
@@ -90,7 +91,7 @@ export const getSavingsGoal = async (goalId: string, userId: string): Promise<Sa
 // Create a new savings goal
 export const createSavingsGoal = async (data: CreateSavingsGoalDto): Promise<SavingsGoal> => {
   try {
-    const response = await fetch('/api/savings-goals', {
+    const response = await fetch(buildApiUrl('/api/savings-goals'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -112,7 +113,7 @@ export const createSavingsGoal = async (data: CreateSavingsGoalDto): Promise<Sav
 // Update an existing savings goal
 export const updateSavingsGoal = async (goalId: string, data: UpdateSavingsGoalDto): Promise<SavingsGoal> => {
   try {
-    const response = await fetch(`/api/savings-goals/${goalId}`, {
+    const response = await fetch(buildApiUrl(`/api/savings-goals/${goalId}`), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -134,7 +135,7 @@ export const updateSavingsGoal = async (goalId: string, data: UpdateSavingsGoalD
 // Delete a savings goal
 export const deleteSavingsGoal = async (goalId: string, userId: string): Promise<void> => {
   try {
-    const response = await fetch(`/api/savings-goals/${goalId}?userId=${userId}`, {
+    const response = await fetch(buildApiUrl(`/api/savings-goals/${goalId}?userId=${userId}`), {
       method: 'DELETE'
     });
     
@@ -150,7 +151,7 @@ export const deleteSavingsGoal = async (goalId: string, userId: string): Promise
 // Add a contribution to a savings goal
 export const addContribution = async (goalId: string, data: CreateContributionDto): Promise<SavingsGoalContribution> => {
   try {
-    const response = await fetch(`/api/savings-goals/${goalId}/contributions`, {
+    const response = await fetch(buildApiUrl(`/api/savings-goals/${goalId}/contributions`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -173,7 +174,7 @@ export const addContribution = async (goalId: string, data: CreateContributionDt
 // Remove a contribution from a savings goal
 export const removeContribution = async (goalId: string, contributionId: string, userId: string): Promise<void> => {
   try {
-    const response = await fetch(`/api/savings-goals/${goalId}/contributions/${contributionId}?userId=${userId}`, {
+    const response = await fetch(buildApiUrl(`/api/savings-goals/${goalId}/contributions/${contributionId}?userId=${userId}`), {
       method: 'DELETE'
     });
     
@@ -189,7 +190,7 @@ export const removeContribution = async (goalId: string, contributionId: string,
 // Get statistics for all savings goals
 export const getSavingsGoalStats = async (userId: string): Promise<SavingsGoalStats> => {
   try {
-    const response = await fetch(`/api/savings-goals/stats?userId=${userId}`);
+    const response = await fetch(buildApiUrl(`/api/savings-goals/stats?userId=${userId}`));
     
     if (!response.ok) {
       throw new Error('Failed to fetch savings goal statistics');

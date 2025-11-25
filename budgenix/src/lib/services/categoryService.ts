@@ -1,4 +1,5 @@
 import { getToken } from './authService';
+import { buildApiUrl } from '../utils/apiUrl';
 
 export interface Category {
   id: string;
@@ -31,7 +32,7 @@ export interface CategoryUpdateInput {
   isIncome?: boolean;
 }
 
-const API_URL = '/api/categories';
+const API_URL = buildApiUrl('/api/categories');
 
 // Pobieranie wszystkich kategorii
 export const getCategories = async (): Promise<Category[]> => {

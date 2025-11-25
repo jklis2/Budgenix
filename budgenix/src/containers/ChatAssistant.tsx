@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 type Message = {
   id: string;
@@ -46,7 +47,7 @@ export default function ChatAssistant() {
 
     try {
       // Call the AI assistant API with Gemini
-      const response = await fetch("/api/ai-assistant", {
+      const response = await fetch(buildApiUrl("/api/ai-assistant"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

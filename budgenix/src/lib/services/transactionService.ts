@@ -1,6 +1,7 @@
 import { getToken } from './authService';
+import { buildApiUrl } from '../utils/apiUrl';
 
-const API_URL = '/api/transactions';
+const API_URL = buildApiUrl('/api/transactions');
 
 export interface Category {
   id: string;
@@ -333,7 +334,7 @@ export const getCategories = async (): Promise<Category[]> => {
     throw new Error('Brak autoryzacji');
   }
 
-  const response = await fetch('/api/categories', {
+  const response = await fetch(buildApiUrl('/api/categories'), {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`
@@ -355,7 +356,7 @@ export const getAccounts = async (): Promise<Account[]> => {
     throw new Error('Brak autoryzacji');
   }
 
-  const response = await fetch('/api/accounts', {
+  const response = await fetch(buildApiUrl('/api/accounts'), {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`

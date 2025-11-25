@@ -1,6 +1,7 @@
 import { getToken, getUserId } from '@/lib/services/authService';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
-const API_URL = '/api/transactions/stats';
+const API_URL = buildApiUrl('/api/transactions/stats');
 
 export interface PeriodData {
   period: string;
@@ -277,7 +278,7 @@ export const getBudgetComparison = async (filters: ReportFilters): Promise<Budge
     }
 
     // Pobierz aktywny budżet
-    const activeBudgetResponse = await fetch(`/api/budgets/active?userId=${userId}`, {
+    const activeBudgetResponse = await fetch(buildApiUrl(`/api/budgets/active?userId=${userId}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -291,7 +292,7 @@ export const getBudgetComparison = async (filters: ReportFilters): Promise<Budge
     const activeBudget = await activeBudgetResponse.json();
 
     // Pobierz statystyki budżetu
-    const statsResponse = await fetch(`/api/budgets/${activeBudget.id}/stats`, {
+    const statsResponse = await fetch(buildApiUrl(`/api/budgets/${activeBudget.id}/stats`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -307,7 +308,7 @@ export const getBudgetComparison = async (filters: ReportFilters): Promise<Budge
     // Dla okresów kwartalnych i rocznych, pobierz transakcje z wybranego okresu
     const dates = getPeriodDates(filters.period || 'month');
     const transactionsStatsResponse = await fetch(
-      `/api/transactions/stats?startDate=${dates.startDate}&endDate=${dates.endDate}`,
+      buildApiUrl(`/api/transactions/stats?startDate=${dates.startDate}&endDate=${dates.endDate}`),
       {
         method: 'GET',
         headers: {

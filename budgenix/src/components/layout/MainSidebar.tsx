@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { sidebarTabs } from "@/constants/sidebarTabs";
 import { formatCurrency } from "@/constants/accountsData";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 interface MainSidebarProps {
   isOpen?: boolean;
@@ -23,7 +24,7 @@ export default function MainSidebar({ isOpen = true, isMobile = false, onClose }
           return;
         }
 
-        const response = await fetch("/api/accounts", {
+        const response = await fetch(buildApiUrl("/api/accounts"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },

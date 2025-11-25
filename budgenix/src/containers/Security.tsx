@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 interface Device {
   id: string;
@@ -42,7 +43,7 @@ export default function Security() {
       const token = getToken();
       if (!token) return;
 
-      const response = await fetch('/api/auth/2fa/status', {
+      const response = await fetch(buildApiUrl('/api/auth/2fa/status'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -62,7 +63,7 @@ export default function Security() {
       const token = getToken();
       if (!token) return;
 
-      const response = await fetch('/api/user/devices', {
+      const response = await fetch(buildApiUrl('/api/user/devices'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -91,7 +92,7 @@ export default function Security() {
         return;
       }
 
-      const response = await fetch('/api/auth/change-password', {
+      const response = await fetch(buildApiUrl('/api/auth/change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +130,7 @@ export default function Security() {
         const token = getToken();
         if (!token) return;
 
-        const response = await fetch('/api/auth/2fa/disable', {
+        const response = await fetch(buildApiUrl('/api/auth/2fa/disable'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -152,7 +153,7 @@ export default function Security() {
         const token = getToken();
         if (!token) return;
 
-        const response = await fetch('/api/auth/2fa/enable', {
+        const response = await fetch(buildApiUrl('/api/auth/2fa/enable'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -177,7 +178,7 @@ export default function Security() {
       const token = getToken();
       if (!token) return;
 
-      const response = await fetch('/api/auth/2fa/verify-enable', {
+      const response = await fetch(buildApiUrl('/api/auth/2fa/verify-enable'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +207,7 @@ export default function Security() {
       const token = getToken();
       if (!token) return;
 
-      const response = await fetch(`/api/user/devices/${deviceId}`, {
+      const response = await fetch(buildApiUrl(`/api/user/devices/${deviceId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -226,7 +227,7 @@ export default function Security() {
       const token = getToken();
       if (!token) return;
 
-      const response = await fetch('/api/user/devices/logout-all', {
+      const response = await fetch(buildApiUrl('/api/user/devices/logout-all'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Account } from '@/constants/accountsData';
 import { Category } from '@/lib/services/categoryService';
 import { getCategories } from '@/lib/services/categoryService';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 // Lokalny interfejs Subscription, który używa string jako typ dla id
 interface Subscription {
@@ -100,7 +101,7 @@ export function SubscriptionForm({ subscription, onSubmit, onCancel, isSubmittin
         // Fetch accounts
         const token = localStorage.getItem("token");
         if (token) {
-          const response = await fetch("/api/accounts", {
+          const response = await fetch(buildApiUrl("/api/accounts"), {
             headers: {
               Authorization: `Bearer ${token}`,
             },

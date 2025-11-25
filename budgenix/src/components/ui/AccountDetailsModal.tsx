@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 import { Account, formatCurrency } from '@/constants/accountsData';
 
 interface Transaction {
@@ -37,7 +38,7 @@ export const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
         return;
       }
 
-      const response = await fetch(`/api/accounts/${account.id}`, {
+      const response = await fetch(buildApiUrl(`/api/accounts/${account.id}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AuthInput from "@/components/ui/AuthInput";
 import Link from "next/link";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch(buildApiUrl("/api/auth/register"), {
         method: "POST",
         body: JSON.stringify({ email, password }),
         headers: { "Content-Type": "application/json" },

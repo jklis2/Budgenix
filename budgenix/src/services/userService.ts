@@ -13,7 +13,7 @@ export interface UpdateUserProfileRequest {
   avatarColor?: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 /**
  * Get user profile by user ID
@@ -21,7 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 export async function getUserProfile(userId: string): Promise<User> {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(`${API_URL}/api/user/${userId}`, {
+  const response = await fetch(buildApiUrl(`/api/user/${userId}`), {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -46,7 +46,7 @@ export async function updateUserProfile(
 ): Promise<User> {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(`${API_URL}/api/user/${userId}`, {
+  const response = await fetch(buildApiUrl(`/api/user/${userId}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

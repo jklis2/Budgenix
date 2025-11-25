@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 import { CategoryStatCard } from '@/components/ui/CategoryStatCard';
 import { CategoryListItem } from '@/components/ui/CategoryListItem';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -69,7 +70,7 @@ export default function Categories() {
       const categories = await getCategories();
       
       // Pobieramy aktywny budżet i statystyki
-      const activeBudgetResponse = await fetch(`/api/budgets/active?userId=${userId}`);
+      const activeBudgetResponse = await fetch(buildApiUrl(`/api/budgets/active?userId=${userId}`));
       const activeBudget = await activeBudgetResponse.json() as Budget;
       
       console.log('Pobrano aktywny budżet:', activeBudget?.name);

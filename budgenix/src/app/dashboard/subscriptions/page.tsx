@@ -5,6 +5,7 @@ import {
   getDaysUntil, 
   subscriptionTips
 } from '@/constants/subscriptionsData';
+import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 // Aktualizacja interfejsu Subscription, aby używał string zamiast number dla id
 interface Subscription {
@@ -101,7 +102,7 @@ export default function Subscriptions() {
           return;
         }
 
-        const response = await fetch('/api/subscriptions', {
+        const response = await fetch(buildApiUrl('/api/subscriptions'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -152,7 +153,7 @@ export default function Subscriptions() {
         throw new Error('Nie jesteś zalogowany');
       }
       
-      const response = await fetch('/api/subscriptions/process-payments', {
+      const response = await fetch(buildApiUrl('/api/subscriptions/process-payments'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -181,7 +182,7 @@ export default function Subscriptions() {
             return;
           }
 
-          const response = await fetch('/api/subscriptions', {
+          const response = await fetch(buildApiUrl('/api/subscriptions'), {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -272,7 +273,7 @@ export default function Subscriptions() {
       // When the active field is added to the database schema, uncomment this code:
       
       /*
-      const response = await fetch(`/api/subscriptions/${id}`, {
+      const response = await fetch(buildApiUrl(`/api/subscriptions/${id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -311,7 +312,7 @@ export default function Subscriptions() {
         throw new Error('Nie jesteś zalogowany');
       }
       
-      const response = await fetch(`/api/subscriptions/${id}`, {
+      const response = await fetch(buildApiUrl(`/api/subscriptions/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -321,7 +322,7 @@ export default function Subscriptions() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
         // Revert the optimistic update if there was an error
-        const originalSubscriptions = await fetch('/api/subscriptions', {
+        const originalSubscriptions = await fetch(buildApiUrl('/api/subscriptions'), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -367,7 +368,7 @@ export default function Subscriptions() {
       
       console.log('Sending subscription data:', apiData);
       
-      const response = await fetch('/api/subscriptions', {
+      const response = await fetch(buildApiUrl('/api/subscriptions'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
