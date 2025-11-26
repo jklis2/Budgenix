@@ -1,27 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
+import { getUserFromToken } from "@/lib/auth-helpers";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    // Get the token from the Authorization header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    let decoded;
-    
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; email: string };
-    } catch {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Delete all devices for the user
     await prisma.userDevice.deleteMany({
-      where: { userId: decoded.id }
+      where: { userId: user.id }
     });
 
     return NextResponse.json({ 

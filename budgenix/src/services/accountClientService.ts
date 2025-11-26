@@ -3,7 +3,7 @@ import { getToken } from '@/lib/services/authService';
 import { buildApiUrl } from '@/lib/utils/apiUrl';
 
 // Get all accounts for a user
-export const getAccounts = async (userId: string): Promise<Account[]> => {
+export const getAccounts = async (): Promise<Account[]> => {
   try {
     const token = getToken();
     
@@ -29,32 +29,9 @@ export const getAccounts = async (userId: string): Promise<Account[]> => {
       }
     }
     
-    // Rzeczywiste konta użytkownika na podstawie danych z interfejsu
-    console.log('Zwracanie rzeczywistych kont użytkownika na podstawie danych z interfejsu');
-    return [
-      {
-        id: 'main-account',
-        name: 'Konto główne',
-        balance: 23019.99,
-        accountType: 'CHECKING',
-        currency: 'PLN',
-        isDefault: true,
-        userId: userId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 'savings-account',
-        name: 'Konto oszczędnościowe',
-        balance: 6345.00,
-        accountType: 'SAVINGS',
-        currency: 'PLN',
-        isDefault: false,
-        userId: userId,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
+    // Fallback - zwróć puste konta jeśli nie ma tokenu
+    console.log('Brak tokenu - zwracanie pustej listy kont');
+    return [];
   } catch (error) {
     console.error('Error fetching accounts:', error);
     throw error;

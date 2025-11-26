@@ -1,12 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getUserFromToken } from "@/lib/auth-helpers";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const authenticatedUser = await getUserFromToken(request);
+    if (!authenticatedUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id: userId } = await params;
+
+    // Sprawdź czy użytkownik próbuje pobrać swoje własne dane
+    if (authenticatedUser.id !== userId) {
+      return NextResponse.json(
+        { error: "Forbidden - You can only access your own profile" },
+        { status: 403 }
+      );
+    }
 
     // Find the user by ID
     const user = await prisma.user.findUnique({
@@ -40,11 +55,26 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const authenticatedUser = await getUserFromToken(request);
+    if (!authenticatedUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id: userId } = await params;
+
+    // Sprawdź czy użytkownik próbuje zaktualizować swoje własne dane
+    if (authenticatedUser.id !== userId) {
+      return NextResponse.json(
+        { error: "Forbidden - You can only update your own profile" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     // Validate that user exists

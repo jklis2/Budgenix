@@ -8,20 +8,19 @@ interface AddContributionModalProps {
   onClose: () => void;
   onSuccess: () => void;
   goalId: string;
-  userId: string;
 }
 
 const AddContributionModal: React.FC<AddContributionModalProps> = ({ 
   isOpen, 
   onClose, 
   onSuccess, 
-  goalId, 
-  userId 
+  goalId
 }) => {
-  const [formData, setFormData] = useState<Omit<CreateContributionDto, 'userId'>>({    
+  const [formData, setFormData] = useState<CreateContributionDto>({
     amount: 0,
     accountId: '',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    userId: '' // Will be set from token on backend
   });
   
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -36,7 +35,7 @@ const AddContributionModal: React.FC<AddContributionModalProps> = ({
         setFetchingAccounts(true);
         
         // Pobierz konta użytkownika za pomocą accountClientService
-        const accountsData = await getAccounts(userId);
+        const accountsData = await getAccounts();
         setAccounts(accountsData);
         
         // Set default account if available
@@ -57,7 +56,7 @@ const AddContributionModal: React.FC<AddContributionModalProps> = ({
     if (isOpen) {
       fetchAccounts();
     }
-  }, [isOpen, userId]);
+  }, [isOpen]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -92,10 +91,7 @@ const AddContributionModal: React.FC<AddContributionModalProps> = ({
       setLoading(true);
       setError(null);
       
-      await addContribution(goalId, {
-        ...formData,
-        userId
-      });
+      await addContribution(goalId, formData);
       
       onSuccess();
 

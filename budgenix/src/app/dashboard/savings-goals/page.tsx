@@ -73,8 +73,8 @@ export default function SavingsGoals() {
       
       // Fetch goals and stats in parallel
       const [goalsData, statsData] = await Promise.all([
-        getSavingsGoals(userId, isCompleted),
-        getSavingsGoalStats(userId)
+        getSavingsGoals(isCompleted),
+        getSavingsGoalStats()
       ]);
       
       setSavingsGoals(goalsData);
@@ -97,12 +97,7 @@ export default function SavingsGoals() {
     if (confirm('Czy na pewno chcesz usunąć ten cel oszczędnościowy?')) {
       try {
         // Sprawdzamy czy mamy ID użytkownika
-        if (!userId) {
-          alert('Musisz być zalogowany, aby usunąć cel oszczędnościowy');
-          return;
-        }
-        
-        await deleteSavingsGoal(id, userId);
+        await deleteSavingsGoal(id);
         // Refresh data after deletion
         fetchData();
       } catch (err) {
@@ -359,7 +354,6 @@ export default function SavingsGoals() {
           }}
           onSuccess={() => fetchData()}
           goalId={selectedGoalId}
-          userId={userId || ''}
         />
       )}
     </div>
