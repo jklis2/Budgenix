@@ -1,26 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-
-// Helper function to verify JWT token and get user ID
-const getUserIdFromToken = (request: NextRequest) => {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log("No valid authorization header found");
-    return null;
-  }
-
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string, email: string };
-    console.log("Token decoded successfully, user ID:", decoded.id, "email:", decoded.email);
-    return { id: decoded.id, email: decoded.email };
-  } catch (error) {
-    console.error("JWT verification error:", error);
-    return null;
-  }
-};
+import { getUserFromToken } from "@/lib/auth-helpers";
 
 // Default categories that will be created for new users
 const defaultCategories = [
@@ -37,30 +18,9 @@ const defaultCategories = [
 // GET all categories for the authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const userInfo = getUserIdFromToken(request);
-    if (!userInfo) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // First try to find user by ID
-    let user = await prisma.user.findUnique({
-      where: { id: userInfo.id }
-    });
-
-    // If not found, try to find by email
-    if (!user && userInfo.email) {
-      console.log(`User with ID ${userInfo.id} not found, trying to find by email ${userInfo.email}`);
-      user = await prisma.user.findUnique({
-        where: { email: userInfo.email }
-      });
-    }
-
+    const user = await getUserFromToken(request);
     if (!user) {
-      console.log(`User with ID ${userInfo.id} and email ${userInfo.email} not found in the database`);
-      return NextResponse.json(
-        { error: "User not found. Please log in again." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     console.log("User found:", user.id);
@@ -115,34 +75,12 @@ export async function GET(request: NextRequest) {
 // POST - Create a new category
 export async function POST(request: NextRequest) {
   try {
-    const userInfo = getUserIdFromToken(request);
-    if (!userInfo) {
+    const user = await getUserFromToken(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("Attempting to create category for user ID:", userInfo.id, "email:", userInfo.email);
-
-    // First try to find user by ID
-    let user = await prisma.user.findUnique({
-      where: { id: userInfo.id }
-    });
-
-    // If not found, try to find by email
-    if (!user && userInfo.email) {
-      console.log(`User with ID ${userInfo.id} not found, trying to find by email ${userInfo.email}`);
-      user = await prisma.user.findUnique({
-        where: { email: userInfo.email }
-      });
-    }
-    
-    if (!user) {
-      console.log(`User with ID ${userInfo.id} and email ${userInfo.email} not found in the database`);
-      return NextResponse.json(
-        { error: "User not found. Please log in again." },
-        { status: 404 }
-      );
-    }
-
+    console.log("Attempting to create category for user ID:", user.id, "email:", user.email);
     console.log("User found:", user.id);
 
     const { name, icon, color, isIncome } = await request.json();
@@ -170,6 +108,46 @@ export async function POST(request: NextRequest) {
       });
 
       console.log("Category created successfully:", newCategory);
+      
+      // Jeśli kategoria nie jest przychodem, dodaj ją do aktywnego budżetu
+      if (!isIncome) {
+        try {
+          // Znajdź aktywny budżet użytkownika
+          const activeBudget = await prisma.budget.findFirst({
+            where: {
+              userId: user.id,
+              isActive: true
+            }
+          });
+
+          if (activeBudget) {
+            // Sprawdź czy pozycja budżetowa dla tej kategorii już istnieje
+            const existingItem = await prisma.budgetItem.findFirst({
+              where: {
+                budgetId: activeBudget.id,
+                categoryId: newCategory.id
+              }
+            });
+
+            // Jeśli nie istnieje, utwórz nową pozycję budżetową
+            if (!existingItem) {
+              await prisma.budgetItem.create({
+                data: {
+                  budgetId: activeBudget.id,
+                  categoryId: newCategory.id,
+                  allocatedAmount: 1000 // Domyślna kwota budżetowa
+                }
+              });
+              
+              console.log(`Added category ${newCategory.name} to active budget with default amount 1000`);
+            }
+          }
+        } catch (budgetError) {
+          console.error("Error adding category to budget:", budgetError);
+          // Nie przerywamy procesu - kategoria została utworzona pomyślnie
+        }
+      }
+      
       return NextResponse.json(newCategory, { status: 201 });
     } catch (error) {
       console.error("Error creating category with Prisma:", error);

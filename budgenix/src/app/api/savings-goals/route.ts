@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as savingsGoalService from '@/services/savingsGoalService';
+import { getUserFromToken } from '@/lib/auth-helpers';
 
 // GET /api/savings-goals
 // Get all savings goals for the authenticated user
 export async function GET(request: NextRequest) {
   try {
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const userId = user.id;
+    
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
     const isCompleted = searchParams.get('isCompleted');
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-    }
 
     // Build filter
     const filter: { isCompleted?: boolean } = {};
@@ -37,12 +41,15 @@ export async function GET(request: NextRequest) {
 // Create a new savings goal
 export async function POST(request: NextRequest) {
   try {
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     // Parse the request body
     const body = await request.json();
-    
-    if (!body.userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-    }
+    const userId = user.id;
     
     // Validate required fields
     if (!body.name || !body.targetAmount || !body.startDate || !body.targetDate) {
@@ -62,7 +69,7 @@ export async function POST(request: NextRequest) {
         icon: body.icon,
         color: body.color
       },
-      body.userId
+      userId
     );
 
     return NextResponse.json(savingsGoal, { status: 201 });

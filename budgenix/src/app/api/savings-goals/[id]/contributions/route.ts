@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
+import { getUserFromToken } from '@/lib/auth-helpers';
 
 // POST /api/savings-goals/[id]/contributions
 // Add a contribution to a savings goal
@@ -9,6 +10,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const userId = user.id;
+    
     // Get the goalId from the URL parameters
     const { id: goalId } = await params;
 
@@ -38,20 +47,13 @@ export async function POST(
       );
     }
 
-    if (!body.userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-
     // Użyjmy transakcji Prisma, aby zapewnić spójność danych
     const result = await prisma.$transaction(async (tx) => {
       // 1. Sprawdź, czy cel oszczędnościowy istnieje i należy do użytkownika
       const goal = await tx.savingsGoal.findUnique({
         where: {
           id: goalId,
-          userId: body.userId
+          userId: userId
         }
       });
 
@@ -63,7 +65,7 @@ export async function POST(
       const account = await tx.account.findUnique({
         where: {
           id: body.accountId,
-          userId: body.userId
+          userId: userId
         }
       });
 
@@ -80,7 +82,7 @@ export async function POST(
       let savingsCategory = await tx.category.findFirst({
         where: {
           name: 'Oszczędności',
-          userId: body.userId
+          userId: userId
         }
       });
 
@@ -91,7 +93,7 @@ export async function POST(
             icon: 'savings',
             color: '#4CAF50',
             isIncome: false,
-            userId: body.userId
+            userId: userId
           }
         });
       }
@@ -110,7 +112,7 @@ export async function POST(
           // Nie ma właściwości isExpense, sprawdźmy strukturę modelu Transaction
           categoryId: savingsCategory.id,
           accountId: body.accountId,
-          userId: body.userId
+          userId: userId
         }
       });
 

@@ -1,24 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
-
-// Helper function to verify JWT token and get user ID
-const getUserIdFromToken = (request: NextRequest) => {
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log("No valid authorization header found");
-    return null;
-  }
-
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
-    return decoded.id;
-  } catch (error) {
-    console.error("JWT verification error:", error);
-    return null;
-  }
-};
+import { getUserFromToken } from "@/lib/auth-helpers";
 
 // GET a specific subscription by ID
 export async function GET(
@@ -26,11 +8,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = getUserIdFromToken(request);
-    if (!userId) {
+    const user = await getUserFromToken(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
+    
+    const userId = user.id;
     const { id: subscriptionId } = await params;
 
     // Get subscription
@@ -74,11 +57,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = getUserIdFromToken(request);
-    if (!userId) {
+    const user = await getUserFromToken(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
+    
+    const userId = user.id;
     const { id: subscriptionId } = await params;
     const { name, amount, cycle, nextPayment, category, logo, color, active } = await request.json();
 
@@ -157,11 +141,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = getUserIdFromToken(request);
-    if (!userId) {
+    const user = await getUserFromToken(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
+    
+    const userId = user.id;
     const { id: subscriptionId } = await params;
 
     // Check if subscription exists and belongs to the user

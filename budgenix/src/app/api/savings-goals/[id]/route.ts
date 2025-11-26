@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as savingsGoalService from '@/services/savingsGoalService';
 import { UpdateSavingsGoalDto } from '@/services/savingsGoalService';
+import { getUserFromToken } from '@/lib/auth-helpers';
 
 // GET /api/savings-goals/[id]
 // Get a single savings goal by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    // Get query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    const userId = user.id;
 
     // Get the savings goal
     const savingsGoal = await savingsGoalService.getSavingsGoal(id, userId);
@@ -37,12 +39,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const userId = user.id;
+    
     // Parse the request body
     const body = await request.json();
-    
-    if (!body.userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-    }
 
     // Prepare update data
     const updateData: UpdateSavingsGoalDto = {};
@@ -59,7 +66,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updatedGoal = await savingsGoalService.updateSavingsGoal(
       id,
       updateData,
-      body.userId
+      userId
     );
 
     return NextResponse.json(updatedGoal);
@@ -77,13 +84,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    // Get query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    const userId = user.id;
 
     // Delete the savings goal
     await savingsGoalService.deleteSavingsGoal(id, userId);

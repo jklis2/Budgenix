@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as savingsGoalService from '@/services/savingsGoalService';
+import { getUserFromToken } from '@/lib/auth-helpers';
 
 // GET /api/savings-goals/stats
 // Get statistics for all savings goals
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    const userId = user.id;
 
     // Get savings goal stats
     const stats = await savingsGoalService.getSavingsGoalStats(userId);

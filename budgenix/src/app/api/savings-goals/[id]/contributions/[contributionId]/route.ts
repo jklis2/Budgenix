@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as savingsGoalService from '@/services/savingsGoalService';
+import { getUserFromToken } from '@/lib/auth-helpers';
 
 // DELETE /api/savings-goals/[id]/contributions/[contributionId]
 // Remove a contribution from a savings goal
@@ -14,13 +15,13 @@ export async function DELETE(
   const contributionId = resolvedParams.contributionId;
   
   try {
-    // Get query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    const userId = user.id;
     
     // Remove the contribution
     await savingsGoalService.removeContribution(

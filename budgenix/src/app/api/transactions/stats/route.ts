@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { verifyJWT } from '../../../../lib/jwt';
+import { getUserFromToken } from '../../../../lib/auth-helpers';
 
 const prisma = new PrismaClient();
 
@@ -18,18 +18,13 @@ interface TransactionFilters {
 // GET /api/transactions/stats - Pobieranie statystyk transakcji
 export async function GET(request: NextRequest) {
   try {
-    // Weryfikacja tokenu JWT
-    const token = request.headers.get('authorization')?.split(' ')[1];
-    if (!token) {
-      return NextResponse.json({ error: 'Brak autoryzacji' }, { status: 401 });
+    // Weryfikacja tokenu JWT i pobranie użytkownika
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const payload = await verifyJWT(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Nieprawidłowy token' }, { status: 401 });
-    }
-
-    const userId = payload.id;
+    const userId = user.id;
 
     // Parametry filtrowania
     const { searchParams } = new URL(request.url);
