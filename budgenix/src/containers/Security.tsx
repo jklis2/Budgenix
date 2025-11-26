@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { buildApiUrl } from '@/lib/utils/apiUrl';
+import DeleteAccountModals from '@/components/DeleteAccountModals';
 
 interface Device {
   id: string;
@@ -27,6 +29,12 @@ export default function Security() {
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(true);
+
+  const [deleteAccountStep, setDeleteAccountStep] = useState<'confirm' | 'verify' | null>(null);
+  const [deleteAccountCode, setDeleteAccountCode] = useState('');
+  const [deleteAccountMessage, setDeleteAccountMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchTwoFactorStatus();
@@ -258,6 +266,82 @@ export default function Security() {
     }
   };
 
+  const handleDeleteAccountRequest = async () => {
+    setDeleteAccountLoading(true);
+    setDeleteAccountMessage(null);
+
+    try {
+      const token = getToken();
+      if (!token) {
+        setDeleteAccountMessage({ type: 'error', text: 'Brak autoryzacji' });
+        return;
+      }
+
+      const response = await fetch(buildApiUrl('/api/auth/delete-account/request'), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setDeleteAccountStep('verify');
+        setDeleteAccountMessage({ type: 'success', text: data.message });
+      } else {
+        setDeleteAccountMessage({ type: 'error', text: data.error });
+      }
+    } catch {
+      setDeleteAccountMessage({ type: 'error', text: 'Wystąpił błąd podczas wysyłania kodu' });
+    } finally {
+      setDeleteAccountLoading(false);
+    }
+  };
+
+  const handleDeleteAccountVerify = async () => {
+    setDeleteAccountLoading(true);
+    setDeleteAccountMessage(null);
+
+    try {
+      const token = getToken();
+      if (!token) {
+        setDeleteAccountMessage({ type: 'error', text: 'Brak autoryzacji' });
+        return;
+      }
+
+      const response = await fetch(buildApiUrl('/api/auth/delete-account/verify'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ code: deleteAccountCode })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Account deleted successfully - clear local storage and redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        router.push('/auth/login');
+      } else {
+        setDeleteAccountMessage({ type: 'error', text: data.error });
+      }
+    } catch {
+      setDeleteAccountMessage({ type: 'error', text: 'Wystąpił błąd podczas usuwania konta' });
+    } finally {
+      setDeleteAccountLoading(false);
+    }
+  };
+
+  const handleDeleteAccountClose = () => {
+    setDeleteAccountStep(null);
+    setDeleteAccountCode('');
+    setDeleteAccountMessage(null);
+  };
+
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-100">
@@ -421,10 +505,27 @@ export default function Security() {
               </button>
             )}
           </div>
+          
+          {/* Delete Account Section */}
+          <div className="border-t border-gray-200 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+            <h3 className="text-sm sm:text-md font-medium text-gray-700 mb-2">Usunięcie konta</h3>
+            
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-xs sm:text-sm text-red-800 mb-3">
+                Usunięcie konta jest trwałe i nieodwracalne. Wszystkie Twoje dane zostaną permanentnie usunięte.
+              </p>
+              <button
+                onClick={() => setDeleteAccountStep('confirm')}
+                className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Usuń konto
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Verification Modal */}
+      {/* 2FA Verification Modal */}
       {showVerificationModal && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full">
@@ -470,6 +571,18 @@ export default function Security() {
           </div>
         </div>
       )}
+
+      {/* Delete Account Modals */}
+      <DeleteAccountModals
+        step={deleteAccountStep}
+        verificationCode={deleteAccountCode}
+        message={deleteAccountMessage}
+        loading={deleteAccountLoading}
+        onClose={handleDeleteAccountClose}
+        onConfirm={handleDeleteAccountRequest}
+        onVerify={handleDeleteAccountVerify}
+        onCodeChange={setDeleteAccountCode}
+      />
     </>
   );
 };

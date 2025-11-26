@@ -94,6 +94,7 @@ export async function sendEmailWithOptions(options: EmailOptions) {
 import { renderVerifyEmail } from './emails/VerifyEmail';
 import { renderTwoFactorEmail } from './emails/TwoFactorEmail';
 import { renderResetPasswordEmail } from './emails/ResetPasswordEmail';
+import { renderDeleteAccountEmail } from './emails/DeleteAccountEmail';
 
 export async function sendVerificationEmail(to: string, token: string) {
   if (!to || !token) {
@@ -104,7 +105,8 @@ export async function sendVerificationEmail(to: string, token: string) {
     throw new Error('NEXT_PUBLIC_URL environment variable is not set');
   }
 
-  const verificationUrl = `${process.env.NEXT_PUBLIC_URL}/activate?token=${token}`;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/budgenix';
+  const verificationUrl = `${process.env.NEXT_PUBLIC_URL}${basePath}/activate?token=${token}`;
   
   return sendEmailWithOptions({
     to,
@@ -134,11 +136,24 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     throw new Error('NEXT_PUBLIC_URL environment variable is not set');
   }
 
-  const resetUrl = `${process.env.NEXT_PUBLIC_URL}/auth/reset-password?token=${token}`;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/budgenix';
+  const resetUrl = `${process.env.NEXT_PUBLIC_URL}${basePath}/auth/reset-password?token=${token}`;
   
   return sendEmailWithOptions({
     to,
     subject: "Reset hasła | Budgenix",
     html: renderResetPasswordEmail({ resetUrl })
+  });
+}
+
+export async function sendDeleteAccountEmail(to: string, code: string) {
+  if (!to || !code) {
+    throw new Error('Email address and verification code are required for delete account email');
+  }
+
+  return sendEmailWithOptions({
+    to,
+    subject: "Potwierdzenie usunięcia konta | Budgenix",
+    html: renderDeleteAccountEmail({ code })
   });
 }
