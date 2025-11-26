@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Account, accountTypes, currencyOptions } from "@/constants/accountsData";
+import { buildApiUrl } from "@/lib/utils/apiUrl";
 
 interface AccountFormModalProps {
   isOpen: boolean;
@@ -77,8 +78,8 @@ export default function AccountFormModal({
       }
 
       const url = account
-        ? `/api/accounts/${account.id}`
-        : "/api/accounts";
+        ? buildApiUrl(`/api/accounts/${account.id}`)
+        : buildApiUrl("/api/accounts");
       
       const method = account ? "PUT" : "POST";
 

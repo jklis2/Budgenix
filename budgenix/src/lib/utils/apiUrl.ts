@@ -1,26 +1,27 @@
 /**
- * Pomocnicza funkcja do budowania URL API z uwzględnieniem basePath
- * Automatycznie dodaje basePath z konfiguracji Next.js
+ * Pomocnicza funkcja do budowania URL API
+ * W przeglądarce dodaje basePath, ponieważ fetch() nie korzysta automatycznie z basePath
  */
 
-// Pobierz basePath z konfiguracji środowiska lub użyj domyślnej wartości
-const BASE_PATH = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_BASE_PATH 
-  ? process.env.NEXT_PUBLIC_BASE_PATH 
-  : '/budgenix';
+const BASE_PATH = '/budgenix';
 
 /**
- * Buduje pełny URL API z uwzględnieniem basePath
+ * Buduje URL API z uwzględnieniem basePath w przeglądarce
  * @param path - Ścieżka API, np. '/api/transactions'
- * @returns Pełny URL z basePath
+ * @returns Pełny URL z basePath (tylko w przeglądarce)
  */
 export const buildApiUrl = (path: string): string => {
-  // Jeśli ścieżka już zawiera basePath, zwróć ją bez zmian
-  if (path.startsWith(BASE_PATH)) {
-    return path;
+  // W przeglądarce dodaj basePath do fetch requests
+  if (typeof window !== 'undefined') {
+    // Jeśli ścieżka już zawiera basePath, zwróć ją bez zmian
+    if (path.startsWith(BASE_PATH)) {
+      return path;
+    }
+    return `${BASE_PATH}${path}`;
   }
   
-  // Dodaj basePath do ścieżki
-  return `${BASE_PATH}${path}`;
+  // Na serwerze zwróć ścieżkę bez zmian
+  return path;
 };
 
 /**
