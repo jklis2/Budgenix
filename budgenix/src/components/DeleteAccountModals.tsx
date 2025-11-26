@@ -27,7 +27,7 @@ export default function DeleteAccountModals({
 
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full">
+      <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full relative z-50">
         {step === 'confirm' ? (
           <>
             <div className="flex items-center gap-3 mb-4">

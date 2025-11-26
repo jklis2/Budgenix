@@ -528,7 +528,7 @@ export default function Security() {
       {/* 2FA Verification Modal */}
       {showVerificationModal && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full">
+          <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full relative z-50">
             <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Weryfikacja dwuetapowa</h3>
             
             {verificationMessage && (

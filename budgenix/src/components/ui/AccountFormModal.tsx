@@ -133,7 +133,7 @@ export default function AccountFormModal({
 
   return (
     <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md relative z-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-4">
             {account ? "Edytuj Konto" : "Dodaj Nowe Konto"}
